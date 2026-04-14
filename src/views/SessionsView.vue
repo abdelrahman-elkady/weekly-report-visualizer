@@ -1,0 +1,207 @@
+<script setup>
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useReportStore } from '../stores/report.js'
+import { formatDuration, isOutlierDuration, truncateId, truncateText, formatNumber } from '../utils/format.js'
+import { getCategoryInfo, getAllCategories } from '../utils/categories.js'
+import EmptyState from '../components/EmptyState.vue'
+
+const router = useRouter()
+const { reportData } = useReportStore()
+
+const searchQuery = ref('')
+const activeCategories = ref(new Set())
+const sortBy = ref('createdAt')
+const page = ref(1)
+const perPage = 25
+
+const totals = computed(() => reportData.value?.totals)
+const sessions = computed(() => reportData.value?.sessions || [])
+
+const correlatedCount = computed(() =>
+  totals.value ? totals.value.sessions - totals.value.uncorrelatedSessions : 0
+)
+
+function toggleCategory(cat) {
+  const s = new Set(activeCategories.value)
+  if (s.has(cat)) s.delete(cat)
+  else s.add(cat)
+  activeCategories.value = s
+  page.value = 1
+}
+
+const filteredSessions = computed(() => {
+  let result = sessions.value
+
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase()
+    result = result.filter(s =>
+      s.repoShort?.toLowerCase().includes(q) ||
+      s.repo?.toLowerCase().includes(q) ||
+      s.firstPromptShort?.toLowerCase().includes(q) ||
+      s.gitBranch?.toLowerCase().includes(q) ||
+      s.sessionId?.toLowerCase().includes(q)
+    )
+  }
+
+  if (activeCategories.value.size > 0) {
+    result = result.filter(s => activeCategories.value.has(s.category))
+  }
+
+  const key = sortBy.value
+  result = [...result].sort((a, b) => {
+    if (key === 'durationMin') return (b.durationMin || 0) - (a.durationMin || 0)
+    if (key === 'createdAt') return (b.createdAt || '').localeCompare(a.createdAt || '')
+    if (key === 'correlation') return (b.correlatedPRs?.length || 0) - (a.correlatedPRs?.length || 0)
+    return 0
+  })
+
+  return result
+})
+
+const totalPages = computed(() => Math.ceil(filteredSessions.value.length / perPage) || 1)
+
+const paginatedSessions = computed(() => {
+  const start = (page.value - 1) * perPage
+  return filteredSessions.value.slice(start, start + perPage)
+})
+
+function goToSession(id) {
+  router.push(`/sessions/${id}`)
+}
+
+const sortOptions = [
+  { value: 'createdAt', label: 'Most Recent' },
+  { value: 'durationMin', label: 'Longest First' },
+  { value: 'correlation', label: 'Most Correlated' },
+]
+</script>
+
+<template>
+  <div class="p-8">
+    <!-- Header -->
+    <div class="flex items-start justify-between mb-6">
+      <div>
+        <h1 class="text-3xl font-bold text-on-surface font-headline mb-1">Sessions Explorer</h1>
+        <p class="text-sm text-on-surface-variant">Browse and filter all agent sessions</p>
+      </div>
+      <div class="flex gap-6 text-right">
+        <div>
+          <p class="text-2xl font-mono font-bold text-on-surface">{{ formatNumber(totals?.sessions) }}</p>
+          <p class="text-[0.6875rem] font-mono uppercase tracking-wider text-on-surface-variant">Total</p>
+        </div>
+        <div>
+          <p class="text-2xl font-mono font-bold text-secondary">{{ formatNumber(correlatedCount) }}</p>
+          <p class="text-[0.6875rem] font-mono uppercase tracking-wider text-on-surface-variant">Correlated</p>
+        </div>
+        <div>
+          <p class="text-2xl font-mono font-bold text-tertiary">{{ formatNumber(totals?.uncorrelatedSessions) }}</p>
+          <p class="text-[0.6875rem] font-mono uppercase tracking-wider text-on-surface-variant">Uncorrelated</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="flex items-center gap-4 mb-6">
+      <div class="relative flex-1 max-w-sm">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg">search</span>
+        <input
+          v-model="searchQuery"
+          @input="page = 1"
+          type="text"
+          placeholder="Search by repo, branch, prompt..."
+          class="w-full bg-surface-container-lowest text-on-surface text-sm pl-10 pr-4 py-2 rounded-lg outline-none placeholder:text-outline focus:ring-1 focus:ring-primary/40"
+        />
+      </div>
+      <div class="flex gap-1.5 flex-wrap">
+        <button
+          v-for="cat in getAllCategories()"
+          :key="cat"
+          @click="toggleCategory(cat)"
+          class="text-[0.625rem] font-mono uppercase tracking-wider px-2.5 py-1 rounded-full transition-colors"
+          :class="activeCategories.has(cat)
+            ? 'bg-primary/20 text-primary'
+            : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'"
+        >
+          {{ getCategoryInfo(cat).label }}
+        </button>
+      </div>
+      <select
+        v-model="sortBy"
+        class="bg-surface-container-lowest text-on-surface text-xs font-mono px-3 py-2 rounded-lg outline-none cursor-pointer"
+      >
+        <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+      </select>
+    </div>
+
+    <!-- Table header -->
+    <div class="grid grid-cols-12 gap-3 px-4 py-2 text-[0.6875rem] font-mono uppercase tracking-wider text-on-surface-variant mb-1">
+      <div class="col-span-1">Session</div>
+      <div class="col-span-2">Repo</div>
+      <div class="col-span-1">Category</div>
+      <div class="col-span-2">Branch</div>
+      <div class="col-span-1 text-right">Duration</div>
+      <div class="col-span-4">First Prompt</div>
+      <div class="col-span-1 text-center">PRs</div>
+    </div>
+
+    <!-- Rows -->
+    <div
+      v-for="session in paginatedSessions"
+      :key="session.sessionId"
+      @click="goToSession(session.sessionId)"
+      class="grid grid-cols-12 gap-3 px-4 py-3 hover:bg-surface-container-high/60 transition-colors cursor-pointer items-center rounded-lg"
+    >
+      <div class="col-span-1 text-xs font-mono text-primary">{{ truncateId(session.sessionId) }}</div>
+      <div class="col-span-2">
+        <span class="text-xs px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-mono">
+          {{ session.repoShort }}
+        </span>
+      </div>
+      <div class="col-span-1 flex items-center gap-1">
+        <span class="material-symbols-outlined text-sm" :class="`text-${getCategoryInfo(session.category).color}`">
+          {{ getCategoryInfo(session.category).icon }}
+        </span>
+        <span class="text-xs text-on-surface-variant hidden xl:inline">{{ getCategoryInfo(session.category).label }}</span>
+      </div>
+      <div class="col-span-2 text-xs font-mono text-on-surface-variant truncate">{{ session.gitBranch }}</div>
+      <div class="col-span-1 text-right">
+        <span class="text-xs font-mono" :class="isOutlierDuration(session.durationMin) ? 'text-tertiary' : 'text-on-surface'">
+          {{ formatDuration(session.durationMin) }}
+        </span>
+        <span v-if="isOutlierDuration(session.durationMin)" class="material-symbols-outlined text-xs text-tertiary ml-0.5" title="May include idle time">warning</span>
+      </div>
+      <div class="col-span-4 text-xs text-on-surface-variant truncate">{{ truncateText(session.firstPromptShort, 60) }}</div>
+      <div class="col-span-1 text-center">
+        <span v-if="session.correlatedPRs?.length" class="text-xs font-mono text-secondary">{{ session.correlatedPRs.length }}</span>
+        <span v-else class="text-xs text-on-surface-variant">—</span>
+      </div>
+    </div>
+
+    <EmptyState v-if="!paginatedSessions.length" icon="search_off" message="No sessions match your filters" />
+
+    <!-- Pagination -->
+    <div v-if="totalPages > 1" class="flex items-center justify-between mt-6 pt-4">
+      <span class="text-xs font-mono text-on-surface-variant">
+        {{ filteredSessions.length }} sessions
+      </span>
+      <div class="flex items-center gap-4">
+        <button
+          @click="page = Math.max(1, page - 1)"
+          :disabled="page === 1"
+          class="text-xs font-mono text-on-surface-variant hover:text-on-surface disabled:opacity-30 transition-colors"
+        >
+          <span class="material-symbols-outlined text-base">chevron_left</span>
+        </button>
+        <span class="text-xs font-mono text-on-surface-variant">{{ page }} / {{ totalPages }}</span>
+        <button
+          @click="page = Math.min(totalPages, page + 1)"
+          :disabled="page === totalPages"
+          class="text-xs font-mono text-on-surface-variant hover:text-on-surface disabled:opacity-30 transition-colors"
+        >
+          <span class="material-symbols-outlined text-base">chevron_right</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</template>

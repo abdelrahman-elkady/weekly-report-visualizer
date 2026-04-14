@@ -1,0 +1,503 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "weekly-activity-report/report.schema.json",
+  "title": "Weekly Activity Report",
+  "description": "Output schema for the weekly-activity-report skill. All timestamps are UTC ISO 8601. See REPORT_SCHEMA.md for usage notes and consumer guidance.",
+  "type": "object",
+  "required": [
+    "generatedAt",
+    "windowStart",
+    "windowEnd",
+    "user",
+    "targetBranches",
+    "weekStart",
+    "workweekDays",
+    "totals",
+    "tickets",
+    "sessions",
+    "prs",
+    "reviewedPrs"
+  ],
+  "properties": {
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the report was generated (UTC)"
+    },
+    "windowStart": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Scan window start (UTC)"
+    },
+    "windowEnd": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Scan window end, exclusive (UTC)"
+    },
+    "user": {
+      "type": "string",
+      "description": "GitHub login of the report subject"
+    },
+    "targetBranches": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Branches that count as shipped (e.g. [\"main\", \"master\"])"
+    },
+    "weekStart": {
+      "type": ["string", "null"],
+      "description": "Day-of-week if --week-start was used (e.g. \"sun\"), null otherwise"
+    },
+    "workweekDays": {
+      "type": ["integer", "null"],
+      "description": "Value of --days, null if not set"
+    },
+    "totals": { "$ref": "#/$defs/Totals" },
+    "tickets": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Ticket" }
+    },
+    "sessions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Session" }
+    },
+    "prs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/PR" }
+    },
+    "reviewedPrs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/PR" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "Category": {
+      "type": "string",
+      "enum": [
+        "implementation",
+        "refactor",
+        "debugging",
+        "exploration",
+        "planning",
+        "docs",
+        "review",
+        "devops",
+        "testing",
+        "meta",
+        "ask",
+        "other"
+      ]
+    },
+    "CorrelationMatch": {
+      "type": "object",
+      "description": "A scored match linking a session to a PR (or vice versa)",
+      "required": ["score", "reasons"],
+      "properties": {
+        "key": {
+          "type": "string",
+          "description": "PR key (owner/repo#number) — present in session.correlatedPRs"
+        },
+        "sessionId": {
+          "type": "string",
+          "description": "Session ID — present in pr.correlatedSessions"
+        },
+        "score": {
+          "type": "integer",
+          "minimum": 2,
+          "description": "Confidence score (minimum 2 to appear)"
+        },
+        "reasons": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Signals that contributed: branch, files(N), basename(N), jira(IDS), time"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Totals": {
+      "type": "object",
+      "required": [
+        "sessions",
+        "prs",
+        "reviewedPrs",
+        "categories",
+        "sessionsByRepo",
+        "prsByRepo",
+        "uncorrelatedSessions",
+        "minutesByRepo",
+        "categoryMinutes"
+      ],
+      "properties": {
+        "sessions": {
+          "type": "integer",
+          "description": "Total session count"
+        },
+        "prs": {
+          "type": "integer",
+          "description": "Authored PR count"
+        },
+        "reviewedPrs": {
+          "type": "integer",
+          "description": "Reviewed PR count"
+        },
+        "categories": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" },
+          "description": "Session count per category"
+        },
+        "sessionsByRepo": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" },
+          "description": "Session count per repoShort"
+        },
+        "prsByRepo": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" },
+          "description": "Authored PR count per repoShort"
+        },
+        "uncorrelatedSessions": {
+          "type": "integer",
+          "description": "Sessions with no PR match above threshold"
+        },
+        "minutesByRepo": {
+          "type": "object",
+          "additionalProperties": { "type": "number" },
+          "description": "Total minutes per repoShort, sorted desc"
+        },
+        "categoryMinutes": {
+          "type": "object",
+          "additionalProperties": { "type": "number" },
+          "description": "Total minutes per category, sorted desc"
+        },
+        "minutesByDay": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/DayBucket" },
+          "description": "Per-day breakdown keyed by UTC date (YYYY-MM-DD). Pre-seeded for every date in the window. Insertion order = calendar order."
+        },
+        "prsByDay": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/DayPR" }
+          },
+          "description": "PRs merged on each UTC date"
+        }
+      },
+      "additionalProperties": false
+    },
+    "DayBucket": {
+      "type": "object",
+      "required": ["minutes", "sessions", "categories"],
+      "properties": {
+        "minutes": {
+          "type": "number",
+          "description": "Total session minutes that day"
+        },
+        "sessions": {
+          "type": "integer",
+          "description": "Session count that day"
+        },
+        "categories": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" },
+          "description": "Session count per category that day"
+        }
+      },
+      "additionalProperties": false
+    },
+    "DayPR": {
+      "type": "object",
+      "required": ["repo", "number", "title", "kind", "url"],
+      "properties": {
+        "repo": {
+          "type": "string",
+          "description": "repoShort"
+        },
+        "number": {
+          "type": "integer"
+        },
+        "title": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["authored", "review"]
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Session": {
+      "type": "object",
+      "required": [
+        "sessionId",
+        "filePath",
+        "cwd",
+        "repo",
+        "repoShort",
+        "gitBranch",
+        "firstPrompt",
+        "firstPromptShort",
+        "createdAt",
+        "lastActivityAt",
+        "modifiedAt",
+        "durationMin",
+        "userMsgCount",
+        "assistantMsgCount",
+        "toolCounts",
+        "filesTouched",
+        "filesTouchedRelative",
+        "filesTouchedCount",
+        "bashCmdSample",
+        "userMessages",
+        "assistantTexts",
+        "jiraIds",
+        "category",
+        "correlatedPRs"
+      ],
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Unique session identifier (stem of the .jsonl filename)"
+        },
+        "filePath": {
+          "type": "string",
+          "description": "Absolute path to the source .jsonl file on the generating machine"
+        },
+        "cwd": {
+          "type": "string",
+          "description": "Working directory at session start"
+        },
+        "repo": {
+          "type": "string",
+          "description": "Full owner/repo from git remote"
+        },
+        "repoShort": {
+          "type": "string",
+          "description": "Repo name only (no owner)"
+        },
+        "gitBranch": {
+          "type": "string",
+          "description": "Git branch at session start"
+        },
+        "firstPrompt": {
+          "type": "string",
+          "description": "Full text of the first user message"
+        },
+        "firstPromptShort": {
+          "type": "string",
+          "description": "Truncated first prompt (max 200 chars)"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of the first user record"
+        },
+        "lastActivityAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of the last record"
+        },
+        "modifiedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "File mtime"
+        },
+        "durationMin": {
+          "type": "number",
+          "description": "Duration in minutes (lastActivityAt - createdAt)"
+        },
+        "userMsgCount": {
+          "type": "integer",
+          "description": "Number of user messages"
+        },
+        "assistantMsgCount": {
+          "type": "integer",
+          "description": "Number of assistant messages"
+        },
+        "toolCounts": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" },
+          "description": "Tool invocation counts keyed by tool name"
+        },
+        "filesTouched": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Absolute paths of files touched by file-editing tools"
+        },
+        "filesTouchedRelative": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Same paths, relative to git root"
+        },
+        "filesTouchedCount": {
+          "type": "integer",
+          "description": "Length of filesTouched"
+        },
+        "bashCmdSample": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Up to 8 Bash commands, each truncated to 200 chars"
+        },
+        "userMessages": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/TimestampedText" }
+        },
+        "assistantTexts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/TimestampedText" }
+        },
+        "jiraIds": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Jira IDs extracted from prompts, messages, and branch name"
+        },
+        "category": { "$ref": "#/$defs/Category" },
+        "correlatedPRs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/CorrelationMatch" },
+          "description": "PRs this session contributed to, sorted by score desc"
+        }
+      },
+      "additionalProperties": false
+    },
+    "PR": {
+      "type": "object",
+      "required": [
+        "repo",
+        "repoShort",
+        "number",
+        "title",
+        "url",
+        "createdAt",
+        "closedAt",
+        "mergedAt",
+        "base",
+        "head",
+        "additions",
+        "deletions",
+        "files",
+        "author",
+        "jiraIds",
+        "kind",
+        "correlatedSessions"
+      ],
+      "properties": {
+        "repo": {
+          "type": "string",
+          "description": "Full owner/repo"
+        },
+        "repoShort": {
+          "type": "string",
+          "description": "Repo name only"
+        },
+        "number": {
+          "type": "integer"
+        },
+        "title": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "createdAt": {
+          "type": ["string", "null"],
+          "description": "PR creation time"
+        },
+        "closedAt": {
+          "type": ["string", "null"],
+          "description": "PR close time"
+        },
+        "mergedAt": {
+          "type": "string",
+          "description": "Merge time"
+        },
+        "base": {
+          "type": "string",
+          "description": "Target branch (lowercase)"
+        },
+        "head": {
+          "type": "string",
+          "description": "Source branch"
+        },
+        "additions": {
+          "type": "integer"
+        },
+        "deletions": {
+          "type": "integer"
+        },
+        "files": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "File paths changed in the PR"
+        },
+        "author": {
+          "type": "string",
+          "description": "GitHub login of the PR author"
+        },
+        "jiraIds": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Jira IDs extracted from the PR title"
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["authored", "review"],
+          "description": "Whether the report subject authored or reviewed this PR"
+        },
+        "correlatedSessions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/CorrelationMatch" },
+          "description": "Sessions that contributed (authored PRs only; empty for reviewed PRs)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Ticket": {
+      "type": "object",
+      "required": ["id", "sessionIds", "prKeys", "title", "status"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Jira ticket ID (e.g. PROJ-123)"
+        },
+        "sessionIds": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "prKeys": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "PR keys (owner/repo#number)"
+        },
+        "title": {
+          "type": ["string", "null"],
+          "description": "Jira issue summary (populated by Atlassian MCP enrichment; null otherwise)"
+        },
+        "status": {
+          "type": ["string", "null"],
+          "description": "Jira issue status (populated by enrichment; null otherwise)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "TimestampedText": {
+      "type": "object",
+      "required": ["ts", "text"],
+      "properties": {
+        "ts": {
+          "type": "string",
+          "description": "ISO 8601 timestamp"
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
