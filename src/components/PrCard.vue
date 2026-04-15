@@ -19,8 +19,27 @@ const expanded = ref(false)
     >
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-2 mb-1">
-          <span class="text-sm font-mono text-primary">#{{ pr.number }}</span>
+          <a
+            v-if="pr.url"
+            :href="pr.url"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-sm font-mono text-primary hover:underline"
+            @click.stop
+          >#{{ pr.number }}</a>
+          <span v-else class="text-sm font-mono text-primary">#{{ pr.number }}</span>
           <span class="text-sm text-on-surface truncate">{{ pr.title }}</span>
+          <a
+            v-if="pr.url"
+            :href="pr.url"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-on-surface-variant hover:text-on-surface transition-colors shrink-0"
+            @click.stop
+            title="Open on GitHub"
+          >
+            <span class="material-symbols-outlined text-sm">open_in_new</span>
+          </a>
         </div>
         <div class="flex items-center gap-3 text-xs text-on-surface-variant font-mono">
           <span class="px-2 py-0.5 rounded-full bg-surface-container">{{ pr.repoShort }}</span>
@@ -31,13 +50,15 @@ const expanded = ref(false)
       </div>
       <div class="flex items-center gap-3 shrink-0">
         <div v-if="pr.jiraIds?.length" class="flex gap-1">
-          <span
+          <router-link
             v-for="id in pr.jiraIds"
             :key="id"
-            class="text-[0.625rem] font-mono px-1.5 py-0.5 rounded-full bg-tertiary-container text-tertiary"
+            :to="{ name: 'tickets', query: { search: id } }"
+            @click.stop
+            class="text-[0.625rem] font-mono px-1.5 py-0.5 rounded-full bg-tertiary-container text-tertiary hover:bg-tertiary/20 transition-colors"
           >
             {{ id }}
-          </span>
+          </router-link>
         </div>
         <span
           class="text-[0.625rem] font-mono px-2 py-0.5 rounded-full"

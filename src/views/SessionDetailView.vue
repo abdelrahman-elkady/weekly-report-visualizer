@@ -155,13 +155,14 @@ const hiddenFileCount = computed(() => {
               <span class="text-[0.6875rem] font-mono uppercase tracking-wider text-on-surface-variant">Jira Tickets</span>
             </div>
             <div v-if="session.jiraIds?.length" class="flex flex-wrap gap-1.5">
-              <span
+              <router-link
                 v-for="id in session.jiraIds"
                 :key="id"
-                class="text-xs font-mono px-2 py-0.5 rounded-full bg-tertiary-container text-tertiary"
+                :to="{ name: 'tickets', query: { search: id } }"
+                class="text-xs font-mono px-2 py-0.5 rounded-full bg-tertiary-container text-tertiary hover:bg-tertiary/20 transition-colors"
               >
                 {{ id }}
-              </span>
+              </router-link>
             </div>
             <p v-else class="text-xs text-on-surface-variant">No Jira tickets linked</p>
           </div>

@@ -1,14 +1,25 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useReportStore } from '../stores/report.js'
 import { formatNumber } from '../utils/format.js'
 import PrCard from '../components/PrCard.vue'
 import EmptyState from '../components/EmptyState.vue'
 
+const route = useRoute()
 const { reportData } = useReportStore()
 
 const filterMode = ref('all') // all | authored | reviewed
 const searchQuery = ref('')
+
+watch(() => route.query, (q) => {
+  if (q.tab === 'authored' || q.tab === 'reviewed') {
+    filterMode.value = q.tab
+  } else if (q.tab === undefined) {
+    filterMode.value = 'all'
+  }
+  searchQuery.value = q.search || ''
+}, { immediate: true })
 
 const allPrs = computed(() => [
   ...(reportData.value?.prs || []),

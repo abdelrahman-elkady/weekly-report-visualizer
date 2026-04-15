@@ -3,3 +3,4 @@ dist/
 *.log
 .no-check/
 .DS_Store
+ai-docs/

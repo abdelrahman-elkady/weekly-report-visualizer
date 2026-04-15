@@ -7,6 +7,8 @@ const props = defineProps({
   categoryMinutes: Object,
 })
 
+const emit = defineEmits(['categoryClick'])
+
 const sorted = computed(() => {
   if (!props.categoryMinutes) return []
   return Object.entries(props.categoryMinutes)
@@ -33,7 +35,7 @@ const maxMinutes = computed(() => {
       <span class="text-[0.6875rem] font-mono uppercase tracking-wider text-on-surface-variant">Category Distribution</span>
     </div>
     <div class="space-y-3">
-      <div v-for="item in sorted" :key="item.category" class="group">
+      <div v-for="item in sorted" :key="item.category" class="group cursor-pointer hover:bg-surface-container-highest/30 -mx-2 px-2 py-1 rounded-lg transition-colors" @click="emit('categoryClick', item.category)">
         <div class="flex items-center justify-between mb-1">
           <div class="flex items-center gap-2">
             <span class="material-symbols-outlined text-base" :style="{ color: item.color }">{{ item.icon }}</span>

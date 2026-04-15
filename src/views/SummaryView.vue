@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useReportStore } from '../stores/report.js'
 import { formatDateRange, formatNumber, minutesToHours, isOutlierDuration } from '../utils/format.js'
 import MetricCard from '../components/MetricCard.vue'
@@ -7,6 +8,7 @@ import CategoryBars from '../components/CategoryBars.vue'
 import DailyActivityChart from '../components/DailyActivityChart.vue'
 import RepoBreakdown from '../components/RepoBreakdown.vue'
 
+const router = useRouter()
 const { reportData } = useReportStore()
 
 const dateRange = computed(() =>
@@ -55,18 +57,24 @@ const totalTicketPages = computed(() =>
         label="Total Sessions"
         :value="formatNumber(reportData.totals.sessions)"
         color="primary"
+        clickable
+        @click="router.push({ name: 'sessions' })"
       />
       <MetricCard
         icon="merge"
         label="Authored PRs"
         :value="formatNumber(reportData.totals.prs)"
         color="secondary"
+        clickable
+        @click="router.push({ name: 'prs', query: { tab: 'authored' } })"
       />
       <MetricCard
         icon="rate_review"
         label="Reviewed PRs"
         :value="formatNumber(reportData.totals.reviewedPrs)"
         color="tertiary"
+        clickable
+        @click="router.push({ name: 'prs', query: { tab: 'reviewed' } })"
       />
       <MetricCard
         icon="schedule"
@@ -86,13 +94,13 @@ const totalTicketPages = computed(() =>
     <div class="grid grid-cols-12 gap-6 mb-8">
       <!-- Left: Category distribution -->
       <div class="col-span-7">
-        <CategoryBars :categoryMinutes="reportData.totals.categoryMinutes" />
+        <CategoryBars :categoryMinutes="reportData.totals.categoryMinutes" @categoryClick="cat => router.push({ name: 'sessions', query: { category: cat } })" />
       </div>
 
       <!-- Right: Daily + Repo -->
       <div class="col-span-5 space-y-6">
         <DailyActivityChart :minutesByDay="reportData.totals.minutesByDay" />
-        <RepoBreakdown :minutesByRepo="reportData.totals.minutesByRepo" />
+        <RepoBreakdown :minutesByRepo="reportData.totals.minutesByRepo" @repoClick="repo => router.push({ name: 'sessions', query: { repo } })" />
       </div>
     </div>
 
@@ -121,7 +129,13 @@ const totalTicketPages = computed(() =>
         :key="ticket.id"
         class="grid grid-cols-12 gap-4 px-3 py-3 hover:bg-surface-container-highest/50 transition-colors items-center"
       >
-        <div class="col-span-2 text-sm font-mono text-primary">{{ ticket.id }}</div>
+        <div class="col-span-2">
+          <router-link
+            :to="{ name: 'tickets', query: { search: ticket.id } }"
+            class="text-sm font-mono text-primary hover:underline"
+            @click.stop
+          >{{ ticket.id }}</router-link>
+        </div>
         <div class="col-span-4 text-sm text-on-surface truncate">
           <span v-if="ticket.title">{{ ticket.title }}</span>
           <span v-else class="text-on-surface-variant italic">Not enriched</span>

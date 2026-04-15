@@ -5,11 +5,18 @@ defineProps({
   value: [String, Number],
   unit: { type: String, default: '' },
   color: { type: String, default: 'primary' },
+  clickable: { type: Boolean, default: false },
 })
+
+const emit = defineEmits(['click'])
 </script>
 
 <template>
-  <div class="bg-surface-container-high rounded-xl p-5">
+  <div
+    class="bg-surface-container-high rounded-xl p-5 transition-all duration-200"
+    :class="clickable ? 'cursor-pointer hover:scale-[1.02] hover:bg-surface-container-highest/80' : ''"
+    @click="clickable && emit('click')"
+  >
     <div class="flex items-center gap-2 mb-3">
       <span class="material-symbols-outlined text-lg" :class="`text-${color}`">{{ icon }}</span>
       <span class="text-[0.6875rem] font-mono uppercase tracking-wider text-on-surface-variant">{{ label }}</span>
