@@ -19,6 +19,7 @@ const sorted = computed(() => {
       minutes: mins,
       hours: minutesToHours(mins),
       color: getBarColor(i),
+      isDiscarded: cat === 'discarded',
     }))
 })
 
@@ -35,7 +36,7 @@ const maxMinutes = computed(() => {
       <span class="text-[0.6875rem] font-mono uppercase tracking-wider text-on-surface-variant">Category Distribution</span>
     </div>
     <div class="space-y-3">
-      <div v-for="item in sorted" :key="item.category" class="group cursor-pointer hover:bg-surface-container-highest/30 -mx-2 px-2 py-1 rounded-lg transition-colors" @click="emit('categoryClick', item.category)">
+      <div v-for="item in sorted" :key="item.category" class="group cursor-pointer hover:bg-surface-container-highest/30 -mx-2 px-2 py-1 rounded-lg transition-colors" :class="{ 'opacity-50': item.isDiscarded }" @click="emit('categoryClick', item.category)">
         <div class="flex items-center justify-between mb-1">
           <div class="flex items-center gap-2">
             <span class="material-symbols-outlined text-base" :style="{ color: item.color }">{{ item.icon }}</span>
@@ -46,9 +47,10 @@ const maxMinutes = computed(() => {
         <div class="h-1.5 bg-surface-container-lowest rounded-full overflow-hidden">
           <div
             class="h-full rounded-full transition-all duration-500"
+            :class="item.isDiscarded ? 'border border-dashed border-outline' : ''"
             :style="{
               width: `${(item.minutes / maxMinutes) * 100}%`,
-              backgroundColor: item.color,
+              backgroundColor: item.isDiscarded ? 'var(--color-outline-variant)' : item.color,
             }"
           />
         </div>

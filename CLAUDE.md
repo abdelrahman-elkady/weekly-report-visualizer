@@ -23,3 +23,7 @@ A client-side dashboard for visualizing weekly-activity-report data — historic
 - No backend, no auth — pure client-side static analysis tool
 - Design tokens extracted from plan-and-dev-assets mockups, stripped of fabricated monitoring language
 - `report.schema.json` defines the data contract; `utils/validation.js` enforces it on upload
+
+## Plans
+
+Implementation plans live in `ai-docs/plans/` and are prefixed with a 3-digit zero-padded sequential number, e.g. `001-schema-v1-update.md`, `002-foo.md`. Increment from the highest existing number when adding a new plan.

@@ -11,10 +11,18 @@ export function formatDuration(minutes) {
   return remHours > 0 ? `${days}d ${remHours}h` : `${days}d`
 }
 
-const OUTLIER_THRESHOLD_MINUTES = 480 // 8 hours
+const IDLE_RATIO_THRESHOLD = 0.4
+const MIN_DURATION_FOR_IDLE_CHECK = 10
 
-export function isOutlierDuration(minutes) {
-  return minutes > OUTLIER_THRESHOLD_MINUTES
+export function isHighIdleRatio(durationMin, activeDurationMin) {
+  if (durationMin == null || activeDurationMin == null) return false
+  if (durationMin <= MIN_DURATION_FOR_IDLE_CHECK) return false
+  return (activeDurationMin / durationMin) < IDLE_RATIO_THRESHOLD
+}
+
+export function formatIdleRatio(durationMin, activeDurationMin) {
+  if (!durationMin) return '0%'
+  return Math.round(((activeDurationMin ?? 0) / durationMin) * 100) + '%'
 }
 
 export function formatDate(isoString) {

@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useReportStore } from '../stores/report.js'
-import { formatDuration, isOutlierDuration, truncateId, truncateText, formatNumber } from '../utils/format.js'
+import { formatDuration, isHighIdleRatio, truncateId, truncateText, formatNumber } from '../utils/format.js'
 import { getCategoryInfo, getAllCategories } from '../utils/categories.js'
 import EmptyState from '../components/EmptyState.vue'
 
@@ -103,7 +103,7 @@ const filteredSessions = computed(() => {
 
   const key = sortBy.value
   result = [...result].sort((a, b) => {
-    if (key === 'durationMin') return (b.durationMin || 0) - (a.durationMin || 0)
+    if (key === 'durationMin') return ((b.activeDurationMin ?? b.durationMin) || 0) - ((a.activeDurationMin ?? a.durationMin) || 0)
     if (key === 'createdAt') return (b.createdAt || '').localeCompare(a.createdAt || '')
     if (key === 'correlation') return (b.correlatedPRs?.length || 0) - (a.correlatedPRs?.length || 0)
     return 0
@@ -257,6 +257,7 @@ const sortOptions = [
       :key="session.sessionId"
       @click="goToSession(session.sessionId)"
       class="grid grid-cols-12 gap-3 px-4 py-3 hover:bg-surface-container-high/60 transition-colors cursor-pointer items-center rounded-lg"
+      :class="{ 'opacity-50': session.category === 'discarded' }"
     >
       <div class="col-span-1 text-xs font-mono text-primary">{{ truncateId(session.sessionId) }}</div>
       <div class="col-span-2">
@@ -272,10 +273,10 @@ const sortOptions = [
       </div>
       <div class="col-span-2 text-xs font-mono text-on-surface-variant truncate">{{ session.gitBranch }}</div>
       <div class="col-span-1 text-right">
-        <span class="text-xs font-mono" :class="isOutlierDuration(session.durationMin) ? 'text-tertiary' : 'text-on-surface'">
-          {{ formatDuration(session.durationMin) }}
+        <span class="text-xs font-mono" :class="isHighIdleRatio(session.durationMin, session.activeDurationMin) ? 'text-tertiary' : 'text-on-surface'">
+          {{ formatDuration(session.activeDurationMin ?? session.durationMin) }}
         </span>
-        <span v-if="isOutlierDuration(session.durationMin)" class="material-symbols-outlined text-xs text-tertiary ml-0.5" title="May include idle time">warning</span>
+        <span v-if="isHighIdleRatio(session.durationMin, session.activeDurationMin)" class="material-symbols-outlined text-xs text-tertiary ml-0.5" title="High idle ratio">warning</span>
       </div>
       <div class="col-span-4 text-xs text-on-surface-variant truncate">{{ truncateText(session.firstPromptShort, 60) }}</div>
       <div class="col-span-1 text-center">

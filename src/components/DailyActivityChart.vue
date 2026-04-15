@@ -26,7 +26,7 @@ const chartData = computed(() => {
   return {
     labels: entries.map(([date]) => formatDateShort(date)),
     datasets: [{
-      data: entries.map(([, bucket]) => minutesToHours(bucket.minutes)),
+      data: entries.map(([, bucket]) => minutesToHours(bucket.activeMinutes ?? bucket.minutes)),
       backgroundColor: getCssVar('--color-primary'),
       borderRadius: 3,
       barPercentage: 0.7,

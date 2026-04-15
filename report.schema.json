@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "weekly-activity-report/report.schema.json",
-  "title": "Weekly Activity Report",
-  "description": "Output schema for the weekly-activity-report skill. All timestamps are UTC ISO 8601. See REPORT_SCHEMA.md for usage notes and consumer guidance.",
+  "$id": "progress-report-skill/report/v1.0.0",
+  "title": "Progress Report",
+  "description": "Output schema for the progress-report-skill. All timestamps are UTC ISO 8601. See REPORT_SCHEMA.md for usage notes and consumer guidance.",
   "type": "object",
   "required": [
     "generatedAt",
@@ -85,6 +85,7 @@
         "testing",
         "meta",
         "ask",
+        "discarded",
         "other"
       ]
     },
@@ -125,7 +126,9 @@
         "prsByRepo",
         "uncorrelatedSessions",
         "minutesByRepo",
-        "categoryMinutes"
+        "categoryMinutes",
+        "activeMinutesByRepo",
+        "activeCategoryMinutes"
       ],
       "properties": {
         "sessions": {
@@ -167,7 +170,17 @@
         "categoryMinutes": {
           "type": "object",
           "additionalProperties": { "type": "number" },
-          "description": "Total minutes per category, sorted desc"
+          "description": "Total wall-clock minutes per category, sorted desc"
+        },
+        "activeMinutesByRepo": {
+          "type": "object",
+          "additionalProperties": { "type": "number" },
+          "description": "Total active minutes per repoShort (wall-clock minus idle gaps), sorted desc"
+        },
+        "activeCategoryMinutes": {
+          "type": "object",
+          "additionalProperties": { "type": "number" },
+          "description": "Total active minutes per category (wall-clock minus idle gaps), sorted desc"
         },
         "minutesByDay": {
           "type": "object",
@@ -187,11 +200,15 @@
     },
     "DayBucket": {
       "type": "object",
-      "required": ["minutes", "sessions", "categories"],
+      "required": ["minutes", "activeMinutes", "sessions", "categories"],
       "properties": {
         "minutes": {
           "type": "number",
-          "description": "Total session minutes that day"
+          "description": "Total wall-clock session minutes that day"
+        },
+        "activeMinutes": {
+          "type": "number",
+          "description": "Total active session minutes that day (wall-clock minus idle gaps)"
         },
         "sessions": {
           "type": "integer",
@@ -245,6 +262,7 @@
         "lastActivityAt",
         "modifiedAt",
         "durationMin",
+        "activeDurationMin",
         "userMsgCount",
         "assistantMsgCount",
         "toolCounts",
@@ -308,7 +326,11 @@
         },
         "durationMin": {
           "type": "number",
-          "description": "Duration in minutes (lastActivityAt - createdAt)"
+          "description": "Wall-clock duration in minutes (lastActivityAt - createdAt)"
+        },
+        "activeDurationMin": {
+          "type": "number",
+          "description": "Active duration in minutes (wall-clock minus idle gaps exceeding the idle threshold)"
         },
         "userMsgCount": {
           "type": "integer",
