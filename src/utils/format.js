@@ -49,6 +49,19 @@ export function minutesToHours(minutes) {
   return Math.round((minutes / 60) * 10) / 10
 }
 
+/** YYYY-MM-DD key for date grouping */
+export function formatDateKey(isoString) {
+  if (!isoString) return ''
+  const d = new Date(isoString)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+/** DD/MM/YYYY label for date separators */
+export function formatDayLabel(isoString) {
+  if (!isoString) return ''
+  return new Date(isoString).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
 export function formatDateRange(start, end) {
   if (!start || !end) return ''
   const s = new Date(start)

@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { Marked } from 'marked'
 import DOMPurify from 'dompurify'
+import { formatDateKey, formatDayLabel } from '../utils/format.js'
 
 const md = new Marked({ gfm: true, breaks: true })
 
@@ -10,41 +11,28 @@ const props = defineProps({
   assistantTexts: Array,
 })
 
-function dateKey(ts) {
-  if (!ts) return ''
-  const d = new Date(ts)
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-function formatDayLabel(ts) {
-  if (!ts) return ''
-  return new Date(ts).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
-}
-
 const groupedMessages = computed(() => {
   const user = (props.userMessages || []).map(m => ({ ...m, role: 'user' }))
   const assistant = (props.assistantTexts || []).map(m => ({ ...m, role: 'assistant' }))
-  const sorted = [...user, ...assistant]
-    .map(m => {
-      const d = m.ts ? new Date(m.ts) : null
-      return {
-        ...m,
-        html: DOMPurify.sanitize(md.parse(m.text || '')),
-        time: d ? d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '',
-        date: dateKey(m.ts),
-        _t: d ? d.getTime() : 0,
-      }
-    })
-    .sort((a, b) => a._t - b._t)
+  const sorted = [...user, ...assistant].sort((a, b) =>
+    (a.ts || '').localeCompare(b.ts || '')
+  )
 
   const groups = []
   let currentDate = null
   for (const m of sorted) {
-    if (m.date !== currentDate) {
-      currentDate = m.date
-      groups.push({ type: 'date', label: formatDayLabel(m.ts), key: m.date })
+    const date = formatDateKey(m.ts)
+    if (date !== currentDate) {
+      currentDate = date
+      groups.push({ type: 'date', label: formatDayLabel(m.ts), key: date })
     }
-    groups.push({ type: 'message', ...m })
+    const d = m.ts ? new Date(m.ts) : null
+    groups.push({
+      type: 'message',
+      ...m,
+      html: DOMPurify.sanitize(md.parse(m.text || '')),
+      time: d ? d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '',
+    })
   }
   return groups
 })

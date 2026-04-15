@@ -20,7 +20,6 @@ const perPage = 25
 const totals = computed(() => reportData.value?.totals)
 const sessions = computed(() => reportData.value?.sessions || [])
 
-// URL is the single source of truth for category/repo filters
 function queryParamAsSet(key) {
   const val = route.query[key]
   if (!val) return new Set()
@@ -28,13 +27,11 @@ function queryParamAsSet(key) {
 }
 
 const activeCategories = computed(() => queryParamAsSet('category'))
-// Normalize repo query params to short names (strip owner/ prefix if present)
 const activeRepos = computed(() => {
   const raw = queryParamAsSet('repo')
   return new Set([...raw].map(r => r.includes('/') ? r.split('/').pop() : r))
 })
 
-// All unique repos from session data
 const allRepos = computed(() => {
   const repos = new Set()
   for (const s of sessions.value) {
