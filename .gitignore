@@ -3,3 +3,5 @@ dist/
 *.log
 .no-check/
 .DS_Store
+plan-and-dev-assets/
+.claude/settings.local.json
