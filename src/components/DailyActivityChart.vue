@@ -8,7 +8,7 @@ import {
   LinearScale,
   Tooltip,
 } from 'chart.js'
-import { formatDateShort, minutesToHours } from '../utils/format.js'
+import { formatUtcDateShort, formatUtcWeekdayShort, minutesToHours } from '../utils/format.js'
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip)
 
@@ -20,11 +20,13 @@ const props = defineProps({
   minutesByDay: Object,
 })
 
+const emit = defineEmits(['day-click'])
+
 const chartData = computed(() => {
   if (!props.minutesByDay) return { labels: [], datasets: [] }
   const entries = Object.entries(props.minutesByDay)
   return {
-    labels: entries.map(([date]) => formatDateShort(date)),
+    labels: entries.map(([date]) => [formatUtcWeekdayShort(date), formatUtcDateShort(date)]),
     datasets: [{
       data: entries.map(([, bucket]) => minutesToHours(bucket.activeMinutes ?? bucket.minutes)),
       backgroundColor: getCssVar('--color-primary'),
@@ -40,6 +42,15 @@ const chartOptions = computed(() => {
   return {
     responsive: true,
     maintainAspectRatio: false,
+    onClick: (_evt, elements) => {
+      if (!elements.length) return
+      const idx = elements[0].index
+      const dateKey = Object.keys(props.minutesByDay)[idx]
+      emit('day-click', dateKey)
+    },
+    onHover: (evt, elements) => {
+      evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'
+    },
     plugins: {
       tooltip: {
         callbacks: {

@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useReportStore } from '../stores/report.js'
-import { formatDuration, isHighIdleRatio, truncateId, truncateText, formatNumber } from '../utils/format.js'
+import { formatDuration, isHighIdleRatio, truncateId, truncateText, formatNumber, formatUtcDateShort, formatUtcWeekdayShort, utcDateKey } from '../utils/format.js'
 import { getCategoryInfo, getAllCategories } from '../utils/categories.js'
 import EmptyState from '../components/EmptyState.vue'
 
@@ -31,6 +31,10 @@ const activeRepos = computed(() => {
   const raw = queryParamAsSet('repo')
   return new Set([...raw].map(r => r.includes('/') ? r.split('/').pop() : r))
 })
+const activeDate = computed(() => {
+  const val = route.query.date
+  return Array.isArray(val) ? val[0] : (val || '')
+})
 
 const allRepos = computed(() => {
   const repos = new Set()
@@ -50,8 +54,10 @@ function replaceFilterQuery(updates) {
   const query = {}
   const cats = updates.category ?? activeCategories.value
   const repos = updates.repo ?? activeRepos.value
+  const date = 'date' in updates ? updates.date : activeDate.value
   if (cats.size) query.category = [...cats]
   if (repos.size) query.repo = [...repos]
+  if (date) query.date = date
   router.replace({ query })
   page.value = 1
 }
@@ -73,6 +79,10 @@ function toggleCategory(cat) {
   if (s.has(cat)) s.delete(cat)
   else s.add(cat)
   replaceFilterQuery({ category: s })
+}
+
+function clearDateFilter() {
+  replaceFilterQuery({ date: null })
 }
 
 const correlatedCount = computed(() =>
@@ -99,6 +109,10 @@ const filteredSessions = computed(() => {
 
   if (activeCategories.value.size > 0) {
     result = result.filter(s => activeCategories.value.has(s.category))
+  }
+
+  if (activeDate.value) {
+    result = result.filter(s => utcDateKey(s.createdAt) === activeDate.value)
   }
 
   const key = sortBy.value
@@ -222,6 +236,16 @@ const sortOptions = [
         >
           <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
         </select>
+
+        <button
+          v-if="activeDate"
+          @click="clearDateFilter"
+          class="flex items-center gap-2 text-xs font-mono px-3 py-2 rounded-lg bg-primary/20 text-primary"
+        >
+          <span class="material-symbols-outlined text-base">event</span>
+          {{ formatUtcWeekdayShort(activeDate) }} {{ formatUtcDateShort(activeDate) }}
+          <span class="material-symbols-outlined text-sm">close</span>
+        </button>
       </div>
 
       <!-- Row 2: Category toggles -->

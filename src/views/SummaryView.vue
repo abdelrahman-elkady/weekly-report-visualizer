@@ -107,7 +107,7 @@ const totalTicketPages = computed(() =>
 
       <!-- Right: Daily + Repo -->
       <div class="col-span-5 space-y-6">
-        <DailyActivityChart :minutesByDay="reportData.totals.minutesByDay" />
+        <DailyActivityChart :minutesByDay="reportData.totals.minutesByDay" @day-click="d => router.push({ path: '/sessions', query: { date: d } })" />
         <RepoBreakdown :minutesByRepo="activeMinutesByRepo" @repoClick="repo => router.push({ name: 'sessions', query: { repo } })" />
       </div>
     </div>

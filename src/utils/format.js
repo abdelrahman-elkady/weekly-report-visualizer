@@ -37,6 +37,20 @@ export function formatDateShort(isoString) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
+export function formatUtcDateShort(key) {
+  if (!key) return ''
+  return new Date(key).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })
+}
+
+export function formatUtcWeekdayShort(key) {
+  if (!key) return ''
+  return new Date(key).toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' })
+}
+
+export function utcDateKey(iso) {
+  return iso ? new Date(iso).toISOString().slice(0, 10) : ''
+}
+
 export function formatNumber(n) {
   if (n == null) return '0'
   return n.toLocaleString('en-US')
