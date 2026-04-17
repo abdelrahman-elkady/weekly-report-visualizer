@@ -8,6 +8,8 @@ const props = defineProps({
   maxItems: { type: Number, default: 8 },
 })
 
+const emit = defineEmits(['repoClick'])
+
 const sorted = computed(() => {
   if (!props.minutesByRepo) return []
   return Object.entries(props.minutesByRepo)
@@ -35,7 +37,7 @@ const maxMinutes = computed(() => {
       <span class="text-[0.6875rem] font-mono uppercase tracking-wider text-on-surface-variant">Repo Activity</span>
     </div>
     <div class="space-y-3">
-      <div v-for="item in sorted" :key="item.repo">
+      <div v-for="item in sorted" :key="item.repo" class="cursor-pointer hover:bg-surface-container-highest/30 -mx-2 px-2 py-1 rounded-lg transition-colors" @click="emit('repoClick', item.repo)">
         <div class="flex items-center justify-between mb-1">
           <span class="text-xs text-on-surface truncate mr-2">{{ item.repoShort }}</span>
           <span class="text-xs font-mono text-on-surface-variant whitespace-nowrap">{{ item.hours }}h</span>

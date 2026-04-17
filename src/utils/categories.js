@@ -10,6 +10,7 @@ const CATEGORY_MAP = {
   testing:        { icon: 'science', label: 'Testing', color: 'secondary' },
   meta:           { icon: 'tune', label: 'Meta', color: 'on-surface-variant' },
   ask:            { icon: 'chat', label: 'Ask', color: 'primary' },
+  discarded:      { icon: 'delete_sweep', label: 'Discarded', color: 'on-surface-variant' },
   other:          { icon: 'more_horiz', label: 'Other', color: 'on-surface-variant' },
 }
 

@@ -18,6 +18,13 @@ defineProps({
         >
           {{ truncateId(match.sessionId) }}
         </router-link>
+        <router-link
+          v-else-if="type === 'pr' && match.key"
+          :to="{ name: 'prs', query: { search: match.key } }"
+          class="text-xs font-mono text-primary hover:underline"
+        >
+          {{ match.key }}
+        </router-link>
         <span v-else class="text-xs font-mono text-primary">{{ match.key || match.sessionId }}</span>
         <span class="text-[0.625rem] font-mono text-on-surface-variant">
           Score: {{ match.score }}

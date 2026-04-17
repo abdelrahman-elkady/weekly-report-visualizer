@@ -1,0 +1,9 @@
+{
+  "plansDirectory": "./ai-docs/plans",
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch"
+    ]
+  }
+}

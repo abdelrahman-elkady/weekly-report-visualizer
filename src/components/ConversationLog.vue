@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { Marked } from 'marked'
 import DOMPurify from 'dompurify'
+import { formatDateKey, formatDayLabel } from '../utils/format.js'
 
 const md = new Marked({ gfm: true, breaks: true })
 
@@ -10,16 +11,30 @@ const props = defineProps({
   assistantTexts: Array,
 })
 
-const messages = computed(() => {
+const groupedMessages = computed(() => {
   const user = (props.userMessages || []).map(m => ({ ...m, role: 'user' }))
   const assistant = (props.assistantTexts || []).map(m => ({ ...m, role: 'assistant' }))
-  return [...user, ...assistant]
-    .sort((a, b) => new Date(a.ts) - new Date(b.ts))
-    .map(m => ({
+  const sorted = [...user, ...assistant].sort((a, b) =>
+    (a.ts || '').localeCompare(b.ts || '')
+  )
+
+  const groups = []
+  let currentDate = null
+  for (const m of sorted) {
+    const date = formatDateKey(m.ts)
+    if (date !== currentDate) {
+      currentDate = date
+      groups.push({ type: 'date', label: formatDayLabel(m.ts), key: date })
+    }
+    const d = m.ts ? new Date(m.ts) : null
+    groups.push({
+      type: 'message',
       ...m,
       html: DOMPurify.sanitize(md.parse(m.text || '')),
-      time: m.ts ? new Date(m.ts).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '',
-    }))
+      time: d ? d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '',
+    })
+  }
+  return groups
 })
 </script>
 
@@ -39,15 +54,22 @@ const messages = computed(() => {
       No conversation data available
     </p>
 
-    <div v-for="(msg, i) in messages" :key="i" class="group">
+    <template v-for="(item, i) in groupedMessages" :key="item.key || item.ts || i">
+      <!-- Date separator -->
+      <div v-if="item.type === 'date'" class="flex items-center gap-3 py-2">
+        <div class="flex-1 h-px bg-outline-variant/30" />
+        <span class="text-xs font-mono font-semibold tracking-wider text-on-surface-variant">{{ item.label }}</span>
+        <div class="flex-1 h-px bg-outline-variant/30" />
+      </div>
+
       <!-- User message -->
-      <div v-if="msg.role === 'user'" class="border-l-2 border-primary/40 pl-4 py-3">
+      <div v-else-if="item.role === 'user'" class="border-l-2 border-primary/40 pl-4 py-3">
         <div class="flex items-center gap-2 mb-2">
           <span class="material-symbols-outlined text-sm text-primary">person</span>
           <span class="text-[0.625rem] font-mono uppercase tracking-wider text-on-surface-variant">User</span>
-          <span class="text-[0.625rem] font-mono text-outline ml-auto">{{ msg.time }}</span>
+          <span class="text-xs font-mono font-medium text-on-surface-variant ml-auto">{{ item.time }}</span>
         </div>
-        <div class="markdown-body text-sm" v-html="msg.html" />
+        <div class="markdown-body text-sm" v-html="item.html" />
       </div>
 
       <!-- Assistant message -->
@@ -55,10 +77,10 @@ const messages = computed(() => {
         <div class="flex items-center gap-2 mb-2">
           <span class="material-symbols-outlined text-sm text-secondary">smart_toy</span>
           <span class="text-[0.625rem] font-mono uppercase tracking-wider text-on-surface-variant">Assistant</span>
-          <span class="text-[0.625rem] font-mono text-outline ml-auto">{{ msg.time }}</span>
+          <span class="text-xs font-mono font-medium text-on-surface-variant ml-auto">{{ item.time }}</span>
         </div>
-        <div class="markdown-body text-sm" v-html="msg.html" />
+        <div class="markdown-body text-sm" v-html="item.html" />
       </div>
-    </div>
+    </template>
   </div>
 </template>

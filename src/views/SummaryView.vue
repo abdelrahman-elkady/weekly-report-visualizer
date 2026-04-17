@@ -1,27 +1,37 @@
 <script setup>
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useReportStore } from '../stores/report.js'
-import { formatDateRange, formatNumber, minutesToHours, isOutlierDuration } from '../utils/format.js'
+import { formatDateRange, formatNumber, minutesToHours, isHighIdleRatio } from '../utils/format.js'
 import MetricCard from '../components/MetricCard.vue'
 import CategoryBars from '../components/CategoryBars.vue'
 import DailyActivityChart from '../components/DailyActivityChart.vue'
 import RepoBreakdown from '../components/RepoBreakdown.vue'
 
+const router = useRouter()
 const { reportData } = useReportStore()
 
 const dateRange = computed(() =>
   formatDateRange(reportData.value?.windowStart, reportData.value?.windowEnd)
 )
 
+const activeCategoryMinutes = computed(() =>
+  reportData.value?.totals?.activeCategoryMinutes ?? reportData.value?.totals?.categoryMinutes
+)
+
+const activeMinutesByRepo = computed(() =>
+  reportData.value?.totals?.activeMinutesByRepo ?? reportData.value?.totals?.minutesByRepo
+)
+
 const totalHours = computed(() => {
-  const cm = reportData.value?.totals?.categoryMinutes
+  const cm = activeCategoryMinutes.value
   if (!cm) return 0
   const totalMin = Object.values(cm).reduce((a, b) => a + b, 0)
   return minutesToHours(totalMin)
 })
 
-const hasOutlier = computed(() => {
-  return reportData.value?.sessions?.some(s => isOutlierDuration(s.durationMin))
+const highIdleCount = computed(() => {
+  return reportData.value?.sessions?.filter(s => isHighIdleRatio(s.durationMin, s.activeDurationMin)).length || 0
 })
 
 // Ticket table pagination
@@ -55,18 +65,24 @@ const totalTicketPages = computed(() =>
         label="Total Sessions"
         :value="formatNumber(reportData.totals.sessions)"
         color="primary"
+        clickable
+        @click="router.push({ name: 'sessions' })"
       />
       <MetricCard
         icon="merge"
         label="Authored PRs"
         :value="formatNumber(reportData.totals.prs)"
         color="secondary"
+        clickable
+        @click="router.push({ name: 'prs', query: { tab: 'authored' } })"
       />
       <MetricCard
         icon="rate_review"
         label="Reviewed PRs"
         :value="formatNumber(reportData.totals.reviewedPrs)"
         color="tertiary"
+        clickable
+        @click="router.push({ name: 'prs', query: { tab: 'reviewed' } })"
       />
       <MetricCard
         icon="schedule"
@@ -75,9 +91,9 @@ const totalTicketPages = computed(() =>
         unit="hrs"
         color="primary"
       >
-        <p v-if="hasOutlier" class="text-xs text-tertiary mt-2 flex items-center gap-1">
+        <p v-if="highIdleCount" class="text-xs text-tertiary mt-2 flex items-center gap-1">
           <span class="material-symbols-outlined text-sm">warning</span>
-          Some sessions exceed 8h — may include idle time
+          {{ highIdleCount }} session{{ highIdleCount > 1 ? 's' : '' }} with high idle ratio (&lt;45% active)
         </p>
       </MetricCard>
     </div>
@@ -86,13 +102,13 @@ const totalTicketPages = computed(() =>
     <div class="grid grid-cols-12 gap-6 mb-8">
       <!-- Left: Category distribution -->
       <div class="col-span-7">
-        <CategoryBars :categoryMinutes="reportData.totals.categoryMinutes" />
+        <CategoryBars :categoryMinutes="activeCategoryMinutes" @categoryClick="cat => router.push({ name: 'sessions', query: { category: cat } })" />
       </div>
 
       <!-- Right: Daily + Repo -->
       <div class="col-span-5 space-y-6">
         <DailyActivityChart :minutesByDay="reportData.totals.minutesByDay" />
-        <RepoBreakdown :minutesByRepo="reportData.totals.minutesByRepo" />
+        <RepoBreakdown :minutesByRepo="activeMinutesByRepo" @repoClick="repo => router.push({ name: 'sessions', query: { repo } })" />
       </div>
     </div>
 
@@ -121,7 +137,13 @@ const totalTicketPages = computed(() =>
         :key="ticket.id"
         class="grid grid-cols-12 gap-4 px-3 py-3 hover:bg-surface-container-highest/50 transition-colors items-center"
       >
-        <div class="col-span-2 text-sm font-mono text-primary">{{ ticket.id }}</div>
+        <div class="col-span-2">
+          <router-link
+            :to="{ name: 'tickets', query: { search: ticket.id } }"
+            class="text-sm font-mono text-primary hover:underline"
+            @click.stop
+          >{{ ticket.id }}</router-link>
+        </div>
         <div class="col-span-4 text-sm text-on-surface truncate">
           <span v-if="ticket.title">{{ ticket.title }}</span>
           <span v-else class="text-on-surface-variant italic">Not enriched</span>

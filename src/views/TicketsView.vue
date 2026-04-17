@@ -1,12 +1,18 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useReportStore } from '../stores/report.js'
 import { truncateId } from '../utils/format.js'
 import EmptyState from '../components/EmptyState.vue'
 
+const route = useRoute()
 const { reportData } = useReportStore()
 
 const searchQuery = ref('')
+
+watch(() => route.query, (q) => {
+  searchQuery.value = q.search || ''
+}, { immediate: true })
 const sortBy = ref('sessions')
 const expandedId = ref(null)
 
@@ -130,13 +136,14 @@ const sortOptions = [
           <div v-if="ticket.prKeys?.length">
             <p class="text-[0.6875rem] font-mono uppercase tracking-wider text-on-surface-variant mb-2">Linked PRs</p>
             <div class="flex flex-wrap gap-1.5">
-              <span
+              <router-link
                 v-for="key in ticket.prKeys"
                 :key="key"
-                class="text-xs font-mono px-2 py-0.5 rounded-full bg-surface-container text-secondary"
+                :to="{ name: 'prs', query: { search: key } }"
+                class="text-xs font-mono px-2 py-0.5 rounded-full bg-surface-container text-secondary hover:bg-secondary/15 transition-colors"
               >
                 {{ key }}
-              </span>
+              </router-link>
             </div>
           </div>
         </div>
