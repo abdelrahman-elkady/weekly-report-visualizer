@@ -22,6 +22,11 @@ const props = defineProps({
 
 const emit = defineEmits(['day-click'])
 
+const minWidthPx = computed(() => {
+  const n = Object.keys(props.minutesByDay || {}).length
+  return n * 52
+})
+
 const chartData = computed(() => {
   if (!props.minutesByDay) return { labels: [], datasets: [] }
   const entries = Object.entries(props.minutesByDay)
@@ -92,8 +97,10 @@ const chartOptions = computed(() => {
       <span class="material-symbols-outlined text-lg text-primary">bar_chart</span>
       <span class="text-[0.6875rem] font-mono uppercase tracking-wider text-on-surface-variant">Daily Activity</span>
     </div>
-    <div class="h-48">
-      <Bar :data="chartData" :options="chartOptions" />
+    <div class="h-48 overflow-x-auto">
+      <div class="h-full" :style="{ minWidth: minWidthPx + 'px' }">
+        <Bar :data="chartData" :options="chartOptions" />
+      </div>
     </div>
   </div>
 </template>
