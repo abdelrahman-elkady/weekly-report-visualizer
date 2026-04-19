@@ -61,8 +61,8 @@ function applyFilters(sessions, opts) {
   if (state.hasJira === 'no') result = result.filter(s => (s.jiraIds?.length || 0) === 0)
   if (state.highIdle === 'yes') result = result.filter(s => isHighIdleRatio(s.durationMin, s.activeDurationMin))
   if (state.highIdle === 'no') result = result.filter(s => !isHighIdleRatio(s.durationMin, s.activeDurationMin))
-  if (state.minDuration > 0) result = result.filter(s => (s.activeDurationMin ?? s.durationMin ?? 0) >= state.minDuration)
-  if (state.maxDuration < 300) result = result.filter(s => (s.activeDurationMin ?? s.durationMin ?? 0) <= state.maxDuration)
+  if (state.minDuration > 0) result = result.filter(s => (s.activeDurationMin ?? 0) >= state.minDuration)
+  if (state.maxDuration < 300) result = result.filter(s => (s.activeDurationMin ?? 0) <= state.maxDuration)
   if (state.tools.length) {
     result = result.filter(s => state.tools.every(t => (s.toolCounts?.[t] || 0) > 0))
   }
@@ -74,7 +74,7 @@ function applyFilters(sessions, opts) {
 
   const key = state.sort
   result = [...result].sort((a, b) => {
-    if (key === 'durationMin') return ((b.activeDurationMin ?? b.durationMin) || 0) - ((a.activeDurationMin ?? a.durationMin) || 0)
+    if (key === 'durationMin') return (b.activeDurationMin || 0) - (a.activeDurationMin || 0)
     if (key === 'createdAt') return (b.createdAt || '').localeCompare(a.createdAt || '')
     if (key === 'correlation') return (b.correlatedPRs?.length || 0) - (a.correlatedPRs?.length || 0)
     return 0

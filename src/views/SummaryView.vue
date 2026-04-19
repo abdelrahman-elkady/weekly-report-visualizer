@@ -16,11 +16,11 @@ const dateRange = computed(() =>
 )
 
 const activeCategoryMinutes = computed(() =>
-  reportData.value?.totals?.activeCategoryMinutes ?? reportData.value?.totals?.categoryMinutes
+  reportData.value?.totals?.activeCategoryMinutes
 )
 
 const activeMinutesByRepo = computed(() =>
-  reportData.value?.totals?.activeMinutesByRepo ?? reportData.value?.totals?.minutesByRepo
+  reportData.value?.totals?.activeMinutesByRepo
 )
 
 const totalHours = computed(() => {

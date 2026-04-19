@@ -3,11 +3,12 @@ import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useReportStore } from '../stores/report.js'
 import { useUrlFacets } from '../stores/sessionFilters.js'
-import { formatDuration, isHighIdleRatio, formatIdleRatio, formatDate } from '../utils/format.js'
+import { formatDuration, formatIdleRatio, formatDate, formatIdleKind, formatActiveReviewReason, IDLE_KINDS, IDLE_KIND_COLORS } from '../utils/format.js'
 import { getCategoryInfo } from '../utils/categories.js'
 import ConversationLog from '../components/ConversationLog.vue'
 import ToolUsageChart from '../components/ToolUsageChart.vue'
 import CorrelationBadge from '../components/CorrelationBadge.vue'
+import SessionTimeline from '../components/SessionTimeline.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -58,9 +59,36 @@ onUnmounted(() => document.removeEventListener('keydown', onKeydown))
 
 const catInfo = computed(() => getCategoryInfo(session.value?.category))
 
-const isHighIdle = computed(() =>
-  isHighIdleRatio(session.value?.durationMin, session.value?.activeDurationMin)
-)
+const needsActiveReview = computed(() => !!session.value?.needsActiveReview)
+const activeReviewLabel = computed(() => formatActiveReviewReason(session.value?.activeReviewReason))
+
+const hasIdle = computed(() => (session.value?.idleSec || 0) > 0)
+
+const idleRows = computed(() => {
+  const b = session.value?.idleBreakdownSec || {}
+  return IDLE_KINDS
+    .map(kind => ({ kind, label: `${formatIdleKind(kind)} idle`, sec: b[kind] || 0 }))
+    .filter(r => r.sec > 0)
+})
+
+const idleBarSegments = computed(() => {
+  const activeSec = Math.max(0, (session.value?.activeDurationMin || 0) * 60)
+  const total = activeSec + (session.value?.idleSec || 0)
+  if (total <= 0) return []
+  const parts = [
+    { key: 'active', sec: activeSec, color: 'var(--color-primary)' },
+    ...idleRows.value.map(r => ({ key: r.kind, sec: r.sec, color: IDLE_KIND_COLORS[r.kind] })),
+  ]
+  return parts
+    .filter(p => p.sec > 0)
+    .map(p => ({ ...p, pct: (p.sec / total) * 100 }))
+})
+
+const showTimeline = computed(() => {
+  const s = session.value
+  if (!s) return false
+  return (s.segments?.length || 0) > 1 || (s.gaps?.length || 0) > 0
+})
 
 const CATEGORY_COLOR_CLASSES = {
   primary: 'bg-primary/15 text-primary',
@@ -144,9 +172,9 @@ const hiddenFileCount = computed(() => {
         <span class="opacity-30">|</span>
         <span>{{ session.gitBranch }}</span>
         <span class="opacity-30">|</span>
-        <span :class="isHighIdle ? 'text-tertiary' : ''">
-          {{ formatDuration(session.activeDurationMin ?? session.durationMin) }} active
-          <span v-if="isHighIdle" class="material-symbols-outlined text-xs align-text-bottom" title="High idle ratio">warning</span>
+        <span :class="needsActiveReview ? 'text-tertiary' : ''">
+          {{ formatDuration(session.activeDurationMin) }} active
+          <span v-if="needsActiveReview" class="material-symbols-outlined text-xs align-text-bottom" :title="activeReviewLabel">warning</span>
         </span>
         <span class="opacity-30">|</span>
         <span>{{ formatDate(session.createdAt) }}</span>
@@ -154,15 +182,24 @@ const hiddenFileCount = computed(() => {
     </div>
 
     <div
-      v-if="isHighIdle"
+      v-if="needsActiveReview"
       class="mb-6 flex items-center gap-3 px-4 py-3 rounded-lg bg-tertiary-container/20 border border-tertiary/30"
     >
       <span class="material-symbols-outlined text-tertiary">schedule</span>
       <span class="text-sm text-on-surface">
-        High idle ratio — only {{ formatIdleRatio(session.durationMin, session.activeDurationMin) }} active
+        {{ activeReviewLabel }} — only {{ formatIdleRatio(session.durationMin, session.activeDurationMin) }} active
         ({{ formatDuration(session.activeDurationMin) }} of {{ formatDuration(session.durationMin) }})
       </span>
     </div>
+
+    <SessionTimeline
+      v-if="showTimeline"
+      class="mb-6"
+      :createdAt="session.createdAt"
+      :lastActivityAt="session.lastActivityAt"
+      :segments="session.segments || []"
+      :gaps="session.gaps || []"
+    />
 
     <div class="grid grid-cols-12 gap-8">
       <!-- Left: Conversation + stats -->
@@ -187,11 +224,40 @@ const hiddenFileCount = computed(() => {
             <div class="space-y-3 text-xs">
               <div class="flex justify-between">
                 <span class="text-on-surface-variant">Active Time</span>
-                <span class="font-mono text-primary">{{ formatDuration(session.activeDurationMin ?? session.durationMin) }}</span>
+                <span class="font-mono text-primary">{{ formatDuration(session.activeDurationMin) }}</span>
               </div>
               <div class="flex justify-between">
                 <span class="text-on-surface-variant">Wall-clock</span>
                 <span class="font-mono text-on-surface-variant">{{ formatDuration(session.durationMin) }}</span>
+              </div>
+              <div v-if="hasIdle" class="pt-1">
+                <div class="flex h-2 rounded overflow-hidden bg-surface-container-lowest mb-2">
+                  <div
+                    v-for="p in idleBarSegments"
+                    :key="p.key"
+                    :style="{ width: p.pct + '%', background: p.color, minWidth: '2px' }"
+                    :title="`${p.key === 'active' ? 'Active' : formatIdleKind(p.key)}: ${formatDuration(p.sec / 60)}`"
+                  ></div>
+                </div>
+                <div
+                  v-for="row in idleRows"
+                  :key="row.kind"
+                  class="flex justify-between"
+                >
+                  <span class="text-on-surface-variant flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-sm inline-block" :style="{ background: IDLE_KIND_COLORS[row.kind] }"></span>
+                    {{ row.label }}
+                  </span>
+                  <span class="font-mono text-on-surface-variant">{{ formatDuration(row.sec / 60) }}</span>
+                </div>
+                <div v-if="session.userPauseCount > 0" class="flex flex-wrap gap-1.5 pt-2">
+                  <span class="text-[0.6875rem] font-mono px-2 py-0.5 rounded-full bg-surface-container-lowest text-on-surface-variant">
+                    {{ session.userPauseCount }} pause{{ session.userPauseCount === 1 ? '' : 's' }}
+                  </span>
+                  <span v-if="session.longestUserPauseSec > 0" class="text-[0.6875rem] font-mono px-2 py-0.5 rounded-full bg-surface-container-lowest text-on-surface-variant">
+                    longest {{ formatDuration(session.longestUserPauseSec / 60) }}
+                  </span>
+                </div>
               </div>
               <div class="flex justify-between">
                 <span class="text-on-surface-variant">Messages</span>

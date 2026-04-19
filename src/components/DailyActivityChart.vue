@@ -37,7 +37,7 @@ const emit = defineEmits(['day-click'])
 
 const METRICS = [
   { key: 'sessions', label: 'Sessions', swatchClass: 'bg-primary' },
-  { key: 'hours', label: 'Hours', swatchClass: 'bg-tertiary' },
+  { key: 'hours', label: 'Active hours', swatchClass: 'bg-tertiary' },
 ]
 
 const visible = ref({ sessions: true, hours: true })
@@ -53,7 +53,7 @@ const labels = computed(() =>
 )
 const sessionsData = computed(() => entries.value.map(([, b]) => b.sessions))
 const hoursData = computed(() =>
-  entries.value.map(([, b]) => minutesToHours(b.activeMinutes ?? b.minutes))
+  entries.value.map(([, b]) => minutesToHours(b.activeMinutes))
 )
 
 function niceMax(v) {
@@ -88,7 +88,7 @@ function buildDatasets({ withData }) {
     },
     {
       type: 'line',
-      label: 'Hours',
+      label: 'Active hours',
       yAxisID: 'yHours',
       data: withData ? hoursData.value : [],
       borderColor: withData ? getCssVar('--color-tertiary') : 'transparent',
