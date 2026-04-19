@@ -1,8 +1,9 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useReportStore } from '../stores/report.js'
-import { formatDuration, isHighIdleRatio, formatIdleRatio, formatDate, formatNumber } from '../utils/format.js'
+import { useUrlFacets } from '../stores/sessionFilters.js'
+import { formatDuration, isHighIdleRatio, formatIdleRatio, formatDate } from '../utils/format.js'
 import { getCategoryInfo } from '../utils/categories.js'
 import ConversationLog from '../components/ConversationLog.vue'
 import ToolUsageChart from '../components/ToolUsageChart.vue'
@@ -11,10 +12,49 @@ import CorrelationBadge from '../components/CorrelationBadge.vue'
 const route = useRoute()
 const router = useRouter()
 const { reportData } = useReportStore()
+const { filteredSessions: computeFiltered } = useUrlFacets(route)
+
+const filteredSessions = computed(() => computeFiltered(reportData.value?.sessions || []))
 
 const session = computed(() =>
   reportData.value?.sessions?.find(s => s.sessionId === route.params.id)
 )
+
+const currentIndex = computed(() =>
+  filteredSessions.value.findIndex(s => s.sessionId === route.params.id)
+)
+
+const inFilteredSet = computed(() => currentIndex.value >= 0)
+const totalInSet = computed(() => filteredSessions.value.length)
+const prevSession = computed(() =>
+  currentIndex.value > 0 ? filteredSessions.value[currentIndex.value - 1] : null
+)
+const nextSession = computed(() =>
+  currentIndex.value >= 0 && currentIndex.value < totalInSet.value - 1
+    ? filteredSessions.value[currentIndex.value + 1]
+    : null
+)
+
+function backToList() {
+  router.push({ name: 'sessions', query: route.query })
+}
+function goPrev() {
+  if (prevSession.value) router.push({ name: 'session-detail', params: { id: prevSession.value.sessionId }, query: route.query })
+}
+function goNext() {
+  if (nextSession.value) router.push({ name: 'session-detail', params: { id: nextSession.value.sessionId }, query: route.query })
+}
+
+function onKeydown(e) {
+  const tag = e.target.tagName
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) return
+  if (e.key === 'j') { e.preventDefault(); goNext() }
+  else if (e.key === 'k') { e.preventDefault(); goPrev() }
+  else if (e.key === 'Escape') backToList()
+}
+
+onMounted(() => document.addEventListener('keydown', onKeydown))
+onUnmounted(() => document.removeEventListener('keydown', onKeydown))
 
 const catInfo = computed(() => getCategoryInfo(session.value?.category))
 
@@ -47,34 +87,69 @@ const hiddenFileCount = computed(() => {
 <template>
   <div class="p-8" v-if="session">
     <!-- Header -->
-    <div class="flex items-center gap-4 mb-8">
+    <div class="flex items-center gap-3 flex-wrap mb-6">
       <button
-        @click="router.push({ name: 'sessions' })"
-        class="text-on-surface-variant hover:text-on-surface transition-colors"
+        @click="backToList"
+        class="p-1.5 rounded-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors"
+        title="Back to Sessions (Esc)"
       >
         <span class="material-symbols-outlined">arrow_back</span>
       </button>
-      <div class="flex-1">
-        <div class="flex items-center gap-3 mb-1">
-          <h1 class="text-xl font-mono font-bold text-on-surface">{{ session.sessionId }}</h1>
-          <span
-            class="text-xs font-mono px-2.5 py-0.5 rounded-full"
-            :class="[catBadgeClass, session.category === 'discarded' ? 'border border-dashed border-outline' : '']"
-          >
-            <span class="material-symbols-outlined text-xs mr-0.5 align-text-bottom">{{ catInfo.icon }}</span>
-            {{ catInfo.label }}
-          </span>
-        </div>
-        <div class="flex items-center gap-3 text-xs text-on-surface-variant font-mono">
-          <span>{{ session.repoShort }}</span>
-          <span class="opacity-30">|</span>
-          <span>{{ session.gitBranch }}</span>
-          <span class="opacity-30">|</span>
-          <span :class="isHighIdle ? 'text-tertiary' : ''">
-            {{ formatDuration(session.activeDurationMin ?? session.durationMin) }}
-            <span v-if="isHighIdle" class="material-symbols-outlined text-xs align-text-bottom" title="High idle ratio">warning</span>
-          </span>
-        </div>
+
+      <div v-if="inFilteredSet && totalInSet > 1" class="inline-flex items-center gap-1 bg-surface-container-low p-1 rounded-md">
+        <button
+          @click="goPrev"
+          :disabled="!prevSession"
+          class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          title="Previous (k)"
+        >
+          <span class="material-symbols-outlined text-base">chevron_left</span>
+        </button>
+        <span class="font-mono text-[0.6875rem] text-on-surface-variant px-2">
+          <span class="text-on-surface">{{ currentIndex + 1 }}</span>
+          <span class="opacity-50"> / {{ totalInSet }}</span>
+        </span>
+        <button
+          @click="goNext"
+          :disabled="!nextSession"
+          class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          title="Next (j)"
+        >
+          <span class="material-symbols-outlined text-base">chevron_right</span>
+        </button>
+      </div>
+
+      <div v-if="inFilteredSet && totalInSet > 1" class="text-[0.6875rem] font-mono text-on-surface-variant flex items-center">
+        <kbd class="bg-surface-container-lowest px-1.5 py-0.5 rounded text-on-surface-variant">k</kbd>
+        <span class="mx-1 opacity-40">·</span>
+        <kbd class="bg-surface-container-lowest px-1.5 py-0.5 rounded text-on-surface-variant">j</kbd>
+        <span class="ml-1.5 opacity-60">to navigate</span>
+      </div>
+
+      <div class="flex-1"></div>
+
+      <span
+        class="text-xs font-mono px-2.5 py-0.5 rounded-full inline-flex items-center gap-1"
+        :class="[catBadgeClass, session.category === 'discarded' ? 'border border-dashed border-outline' : '']"
+      >
+        <span class="material-symbols-outlined text-xs">{{ catInfo.icon }}</span>
+        {{ catInfo.label }}
+      </span>
+    </div>
+
+    <div class="mb-6">
+      <h1 class="text-xl font-mono font-bold text-on-surface mb-1.5">{{ session.sessionId }}</h1>
+      <div class="flex items-center gap-3 text-xs text-on-surface-variant font-mono flex-wrap">
+        <span>{{ session.repo }}</span>
+        <span class="opacity-30">|</span>
+        <span>{{ session.gitBranch }}</span>
+        <span class="opacity-30">|</span>
+        <span :class="isHighIdle ? 'text-tertiary' : ''">
+          {{ formatDuration(session.activeDurationMin ?? session.durationMin) }} active
+          <span v-if="isHighIdle" class="material-symbols-outlined text-xs align-text-bottom" title="High idle ratio">warning</span>
+        </span>
+        <span class="opacity-30">|</span>
+        <span>{{ formatDate(session.createdAt) }}</span>
       </div>
     </div>
 
@@ -221,7 +296,7 @@ const hiddenFileCount = computed(() => {
   <div v-else class="p-8 flex flex-col items-center justify-center min-h-[60vh]">
     <span class="material-symbols-outlined text-4xl text-on-surface-variant opacity-40 mb-3">search_off</span>
     <p class="text-on-surface-variant">Session not found</p>
-    <button @click="router.push({ name: 'sessions' })" class="mt-4 text-sm text-primary hover:underline">
+    <button @click="backToList" class="mt-4 text-sm text-primary hover:underline">
       Back to Sessions
     </button>
   </div>
