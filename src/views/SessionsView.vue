@@ -407,7 +407,7 @@ const sortHeaders = [
           </div>
           <div class="col-span-1 text-right">
             <span class="text-xs font-mono" :class="isHighIdleRatio(session.durationMin, session.activeDurationMin) ? 'text-tertiary' : 'text-on-surface'">
-              {{ formatDuration(session.activeDurationMin ?? session.durationMin) }}
+              {{ formatDuration(session.activeDurationMin) }}
             </span>
             <span v-if="isHighIdleRatio(session.durationMin, session.activeDurationMin)" class="material-symbols-outlined text-xs text-tertiary ml-0.5" title="High idle ratio">warning</span>
           </div>

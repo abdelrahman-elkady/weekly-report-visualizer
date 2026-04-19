@@ -25,6 +25,32 @@ export function formatIdleRatio(durationMin, activeDurationMin) {
   return Math.round(((activeDurationMin ?? 0) / durationMin) * 100) + '%'
 }
 
+export const IDLE_KINDS = ['user_pause', 'tool_runtime', 'inference']
+
+export const IDLE_KIND_COLORS = {
+  user_pause: '#f59e0b',
+  tool_runtime: '#8b5cf6',
+  inference: '#06b6d4',
+}
+
+const IDLE_KIND_LABELS = {
+  user_pause: 'User pause',
+  tool_runtime: 'Tool runtime',
+  inference: 'Inference',
+}
+
+export function formatIdleKind(kind) {
+  return IDLE_KIND_LABELS[kind] ?? kind
+}
+
+export function formatActiveReviewReason(reason) {
+  return {
+    long_single_pause: 'Long single pause',
+    high_idle_ratio: 'High idle ratio',
+    many_long_gaps: 'Many long gaps',
+  }[reason] ?? reason
+}
+
 export function formatDate(isoString) {
   if (!isoString) return 'N/A'
   const d = new Date(isoString)
