@@ -86,10 +86,15 @@ const matchingRepos = computed(() => {
   const q = repoFacetSearch.value.trim().toLowerCase()
   return q ? allRepos.value.filter(([r]) => r.toLowerCase().includes(q)) : allRepos.value
 })
-const visibleRepos = computed(() =>
-  repoShowAll.value ? matchingRepos.value : matchingRepos.value.slice(0, 8)
+const unpinnedMatching = computed(() =>
+  matchingRepos.value.filter(([r]) => !activeRepos.value.has(r))
 )
-const repoOverflow = computed(() => Math.max(0, matchingRepos.value.length - 8))
+const visibleRepos = computed(() => {
+  const pinned = allRepos.value.filter(([r]) => activeRepos.value.has(r))
+  const rest = repoShowAll.value ? unpinnedMatching.value : unpinnedMatching.value.slice(0, 8)
+  return [...pinned, ...rest]
+})
+const repoOverflow = computed(() => Math.max(0, unpinnedMatching.value.length - 8))
 
 const topTools = computed(() => {
   const m = {}

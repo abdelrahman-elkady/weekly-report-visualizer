@@ -90,10 +90,7 @@ function queryParamAsSet(query, key) {
 
 export function useUrlFacets(route) {
   const activeCategories = computed(() => queryParamAsSet(route.query, 'category'))
-  const activeRepos = computed(() => {
-    const raw = queryParamAsSet(route.query, 'repo')
-    return new Set([...raw].map(r => r.includes('/') ? r.split('/').pop() : r))
-  })
+  const activeRepos = computed(() => queryParamAsSet(route.query, 'repo'))
   const activeDate = computed(() => {
     const val = route.query.date
     return Array.isArray(val) ? val[0] : (val || '')
