@@ -449,7 +449,7 @@ const sortHeaders = [
 
 <style scoped>
 .facet-layout {
-  grid-template-columns: 240px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 240px;
 }
 
 @media (max-width: 900px) {
@@ -461,6 +461,7 @@ const sortHeaders = [
 .facet-col {
   position: sticky;
   top: 16px;
+  order: 1;
 }
 
 .facet-group {
