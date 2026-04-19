@@ -11,18 +11,20 @@ export function formatDuration(minutes) {
   return remHours > 0 ? `${days}d ${remHours}h` : `${days}d`
 }
 
-const IDLE_RATIO_THRESHOLD = 0.4
-const MIN_DURATION_FOR_IDLE_CHECK = 10
-
-export function isHighIdleRatio(durationMin, activeDurationMin) {
-  if (durationMin == null || activeDurationMin == null) return false
-  if (durationMin <= MIN_DURATION_FOR_IDLE_CHECK) return false
-  return (activeDurationMin / durationMin) < IDLE_RATIO_THRESHOLD
+export function formatSec(seconds) {
+  if (seconds == null || seconds < 0) return '0s'
+  if (seconds < 60) return `${Math.round(seconds)}s`
+  return formatDuration(seconds / 60)
 }
 
-export function formatIdleRatio(durationMin, activeDurationMin) {
-  if (!durationMin) return '0%'
-  return Math.round(((activeDurationMin ?? 0) / durationMin) * 100) + '%'
+const ACTIVE_REVIEW_REASONS = {
+  long_single_pause: 'Long single pause detected',
+  high_idle_ratio: 'High idle ratio',
+  many_long_pauses: 'Many long pauses',
+}
+
+export function humanizeActiveReviewReason(reason) {
+  return ACTIVE_REVIEW_REASONS[reason] || ''
 }
 
 export function formatDate(isoString) {
@@ -45,6 +47,21 @@ export function formatUtcDateShort(key) {
 export function formatUtcWeekdayShort(key) {
   if (!key) return ''
   return new Date(key).toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' })
+}
+
+export function formatUtcHm(iso) {
+  if (!iso) return ''
+  const d = iso instanceof Date ? iso : new Date(iso)
+  return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`
+}
+
+export function formatUtcHms(iso) {
+  if (!iso) return ''
+  const d = iso instanceof Date ? iso : new Date(iso)
+  const hh = String(d.getUTCHours()).padStart(2, '0')
+  const mm = String(d.getUTCMinutes()).padStart(2, '0')
+  const ss = String(d.getUTCSeconds()).padStart(2, '0')
+  return `${hh}:${mm}:${ss} UTC`
 }
 
 export function utcDateKey(iso) {

@@ -53,7 +53,7 @@ const labels = computed(() =>
 )
 const sessionsData = computed(() => entries.value.map(([, b]) => b.sessions))
 const hoursData = computed(() =>
-  entries.value.map(([, b]) => minutesToHours(b.activeMinutes ?? b.minutes))
+  entries.value.map(([, b]) => minutesToHours(b.activeMinutes))
 )
 
 function niceMax(v) {

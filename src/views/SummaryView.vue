@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useReportStore } from '../stores/report.js'
-import { formatDateRange, formatNumber, minutesToHours, isHighIdleRatio } from '../utils/format.js'
+import { formatDateRange, formatNumber, minutesToHours } from '../utils/format.js'
 import MetricCard from '../components/MetricCard.vue'
 import CategoryBars from '../components/CategoryBars.vue'
 import DailyActivityChart from '../components/DailyActivityChart.vue'
@@ -16,11 +16,11 @@ const dateRange = computed(() =>
 )
 
 const activeCategoryMinutes = computed(() =>
-  reportData.value?.totals?.activeCategoryMinutes ?? reportData.value?.totals?.categoryMinutes
+  reportData.value?.totals?.activeCategoryMinutes
 )
 
 const activeMinutesByRepo = computed(() =>
-  reportData.value?.totals?.activeMinutesByRepo ?? reportData.value?.totals?.minutesByRepo
+  reportData.value?.totals?.activeMinutesByRepo
 )
 
 const totalHours = computed(() => {
@@ -30,9 +30,9 @@ const totalHours = computed(() => {
   return minutesToHours(totalMin)
 })
 
-const highIdleCount = computed(() => {
-  return reportData.value?.sessions?.filter(s => isHighIdleRatio(s.durationMin, s.activeDurationMin)).length || 0
-})
+const needsReviewCount = computed(() =>
+  reportData.value?.sessions?.filter(s => s.needsActiveReview).length || 0
+)
 
 // Ticket table pagination
 const ticketPage = ref(1)
@@ -91,9 +91,9 @@ const totalTicketPages = computed(() =>
         unit="hrs"
         color="primary"
       >
-        <p v-if="highIdleCount" class="text-xs text-tertiary mt-2 flex items-center gap-1">
+        <p v-if="needsReviewCount" class="text-xs text-tertiary mt-2 flex items-center gap-1">
           <span class="material-symbols-outlined text-sm">warning</span>
-          {{ highIdleCount }} session{{ highIdleCount > 1 ? 's' : '' }} with high idle ratio (&lt;45% active)
+          {{ needsReviewCount }} session{{ needsReviewCount > 1 ? 's' : '' }} flagged for active-duration review
         </p>
       </MetricCard>
     </div>

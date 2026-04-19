@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useReportStore } from '../stores/report.js'
-import { formatDuration, isHighIdleRatio, truncateId, truncateText, formatNumber, formatUtcDateShort, formatUtcWeekdayShort, utcDateKey } from '../utils/format.js'
+import { formatDuration, truncateId, truncateText, formatNumber, formatUtcDateShort, formatUtcWeekdayShort, utcDateKey } from '../utils/format.js'
 import { getCategoryInfo, getAllCategories } from '../utils/categories.js'
 import EmptyState from '../components/EmptyState.vue'
 
@@ -117,7 +117,7 @@ const filteredSessions = computed(() => {
 
   const key = sortBy.value
   result = [...result].sort((a, b) => {
-    if (key === 'durationMin') return ((b.activeDurationMin ?? b.durationMin) || 0) - ((a.activeDurationMin ?? a.durationMin) || 0)
+    if (key === 'durationMin') return (b.activeDurationMin || 0) - (a.activeDurationMin || 0)
     if (key === 'createdAt') return (b.createdAt || '').localeCompare(a.createdAt || '')
     if (key === 'correlation') return (b.correlatedPRs?.length || 0) - (a.correlatedPRs?.length || 0)
     return 0
@@ -297,10 +297,10 @@ const sortOptions = [
       </div>
       <div class="col-span-2 text-xs font-mono text-on-surface-variant truncate">{{ session.gitBranch }}</div>
       <div class="col-span-1 text-right">
-        <span class="text-xs font-mono" :class="isHighIdleRatio(session.durationMin, session.activeDurationMin) ? 'text-tertiary' : 'text-on-surface'">
-          {{ formatDuration(session.activeDurationMin ?? session.durationMin) }}
+        <span class="text-xs font-mono" :class="session.needsActiveReview ? 'text-tertiary' : 'text-on-surface'">
+          {{ formatDuration(session.activeDurationMin) }}
         </span>
-        <span v-if="isHighIdleRatio(session.durationMin, session.activeDurationMin)" class="material-symbols-outlined text-xs text-tertiary ml-0.5" title="High idle ratio">warning</span>
+        <span v-if="session.needsActiveReview" class="material-symbols-outlined text-xs text-tertiary ml-0.5" title="Needs active review">warning</span>
       </div>
       <div class="col-span-4 text-xs text-on-surface-variant truncate">{{ truncateText(session.firstPromptShort, 60) }}</div>
       <div class="col-span-1 text-center">
