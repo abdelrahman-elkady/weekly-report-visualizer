@@ -20,7 +20,7 @@ defineProps({
         </router-link>
         <router-link
           v-else-if="type === 'pr' && match.key"
-          :to="{ name: 'prs', query: { search: match.key } }"
+          :to="{ name: 'prs', query: { key: match.key } }"
           class="text-xs font-mono text-primary hover:underline"
         >
           {{ match.key }}

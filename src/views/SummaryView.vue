@@ -74,7 +74,7 @@ const totalTicketPages = computed(() =>
         :value="formatNumber(reportData.totals.prs)"
         color="secondary"
         clickable
-        @click="router.push({ name: 'prs', query: { tab: 'authored' } })"
+        @click="router.push({ name: 'prs', query: { kind: 'authored' } })"
       />
       <MetricCard
         icon="rate_review"
@@ -82,7 +82,7 @@ const totalTicketPages = computed(() =>
         :value="formatNumber(reportData.totals.reviewedPrs)"
         color="tertiary"
         clickable
-        @click="router.push({ name: 'prs', query: { tab: 'reviewed' } })"
+        @click="router.push({ name: 'prs', query: { kind: 'reviewed' } })"
       />
       <MetricCard
         icon="schedule"

@@ -154,7 +154,7 @@ const sortOptions = [
               <router-link
                 v-for="key in ticket.prKeys"
                 :key="key"
-                :to="{ name: 'prs', query: { search: key } }"
+                :to="{ name: 'prs', query: { key } }"
                 class="text-xs font-mono px-2 py-0.5 rounded-full bg-surface-container text-secondary hover:bg-secondary/15 transition-colors"
               >
                 {{ key }}
