@@ -41,12 +41,13 @@ function isActive(item) {
           {{ sidebarCollapsed ? 'menu' : 'menu_open' }}
         </span>
       </button>
-      <span
+      <router-link
         v-show="!sidebarCollapsed"
-        class="text-sm font-semibold text-on-surface tracking-wide whitespace-nowrap"
+        :to="{ name: 'summary' }"
+        class="text-sm font-semibold text-on-surface hover:text-primary tracking-wide whitespace-nowrap transition-colors"
       >
         Report Visualizer
-      </span>
+      </router-link>
     </div>
 
     <!-- Navigation -->
