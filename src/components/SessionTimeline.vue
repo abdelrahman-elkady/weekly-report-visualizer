@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { formatDuration, formatIdleKind, utcDateKey, IDLE_KINDS, IDLE_KIND_COLORS } from '../utils/format.js'
+import Tooltip from './Tooltip.vue'
 
 const props = defineProps({
   createdAt: { type: String, required: true },
@@ -95,13 +96,16 @@ const legend = [
     </div>
 
     <div class="flex w-full h-6 rounded overflow-hidden bg-surface-container-lowest">
-      <div
+      <Tooltip
         v-for="(it, idx) in items"
         :key="idx"
-        class="h-full shrink-0"
-        :style="{ width: it.pct + '%', minWidth: '2px', background: it.background }"
-        :title="it.tooltip"
-      ></div>
+        :text="it.tooltip"
+      >
+        <div
+          class="h-full shrink-0"
+          :style="{ width: it.pct + '%', minWidth: '2px', background: it.background }"
+        ></div>
+      </Tooltip>
     </div>
 
     <div class="flex justify-between mt-2 text-[0.6875rem] font-mono text-on-surface-variant">
