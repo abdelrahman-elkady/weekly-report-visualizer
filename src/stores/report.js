@@ -8,6 +8,24 @@ const sidebarCollapsed = ref(false)
 
 const isLoaded = computed(() => reportData.value !== null)
 
+const enrichedTickets = computed(() => {
+  const tickets = reportData.value?.tickets
+  if (!tickets) return []
+  const jiraIssues = reportData.value?.jiraIssues || {}
+  return tickets.map(t => {
+    const issue = jiraIssues[t.id]
+    if (!issue) return t
+    return {
+      ...t,
+      title: issue.summary ?? t.title,
+      status: issue.status ?? t.status,
+      statusCategory: issue.statusCategory ?? null,
+      type: issue.type ?? null,
+      assignee: issue.assignee ?? null,
+    }
+  })
+})
+
 function loadReport(jsonString) {
   let data
   try {
@@ -56,6 +74,7 @@ export function useReportStore() {
   return {
     reportData,
     isLoaded,
+    enrichedTickets,
     sidebarCollapsed,
     loadReport,
     loadFromStorage,

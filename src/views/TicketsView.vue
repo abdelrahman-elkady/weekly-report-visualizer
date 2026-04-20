@@ -6,7 +6,7 @@ import { truncateId } from '../utils/format.js'
 import EmptyState from '../components/EmptyState.vue'
 
 const route = useRoute()
-const { reportData } = useReportStore()
+const { reportData, enrichedTickets } = useReportStore()
 
 const searchQuery = ref('')
 
@@ -16,7 +16,12 @@ watch(() => route.query, (q) => {
 const sortBy = ref('sessions')
 const expandedId = ref(null)
 
-const tickets = computed(() => reportData.value?.tickets || [])
+const tickets = enrichedTickets
+
+const hasEnrichment = computed(() => {
+  const issues = reportData.value?.jiraIssues
+  return !!issues && Object.keys(issues).length > 0
+})
 
 const filteredTickets = computed(() => {
   let result = tickets.value
@@ -59,7 +64,7 @@ const sortOptions = [
     </div>
 
     <!-- Enrichment notice -->
-    <div class="bg-surface-container-low rounded-xl p-4 mb-6 flex items-start gap-3">
+    <div v-if="!hasEnrichment" class="bg-surface-container-low rounded-xl p-4 mb-6 flex items-start gap-3">
       <span class="material-symbols-outlined text-lg text-tertiary mt-0.5">info</span>
       <p class="text-xs text-on-surface-variant leading-relaxed">
         Ticket details can be enriched by running the report with Atlassian MCP integration.
@@ -120,6 +125,16 @@ const sortOptions = [
       <!-- Expanded detail -->
       <div v-if="expandedId === ticket.id" class="px-4 pb-4 ml-4">
         <div class="bg-surface-container-high rounded-lg p-4 space-y-3">
+          <div v-if="ticket.type || ticket.assignee" class="flex flex-wrap gap-x-6 gap-y-2 text-xs text-on-surface-variant">
+            <div v-if="ticket.type">
+              <span class="font-mono uppercase tracking-wider mr-2">Type</span>
+              <span class="text-on-surface">{{ ticket.type }}</span>
+            </div>
+            <div v-if="ticket.assignee">
+              <span class="font-mono uppercase tracking-wider mr-2">Assignee</span>
+              <span class="text-on-surface">{{ ticket.assignee }}</span>
+            </div>
+          </div>
           <div v-if="ticket.sessionIds?.length">
             <p class="text-[0.6875rem] font-mono uppercase tracking-wider text-on-surface-variant mb-2">Linked Sessions</p>
             <div class="flex flex-wrap gap-1.5">

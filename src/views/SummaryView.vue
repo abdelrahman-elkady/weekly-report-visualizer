@@ -9,7 +9,7 @@ import DailyActivityChart from '../components/DailyActivityChart.vue'
 import RepoBreakdown from '../components/RepoBreakdown.vue'
 
 const router = useRouter()
-const { reportData } = useReportStore()
+const { reportData, enrichedTickets } = useReportStore()
 
 const dateRange = computed(() =>
   formatDateRange(reportData.value?.windowStart, reportData.value?.windowEnd)
@@ -38,7 +38,7 @@ const highIdleCount = computed(() => {
 const ticketPage = ref(1)
 const ticketsPerPage = 20
 
-const tickets = computed(() => reportData.value?.tickets || [])
+const tickets = enrichedTickets
 
 const paginatedTickets = computed(() => {
   const start = (ticketPage.value - 1) * ticketsPerPage
