@@ -84,12 +84,6 @@ const idleBarSegments = computed(() => {
     .map(p => ({ ...p, pct: (p.sec / total) * 100 }))
 })
 
-const showTimeline = computed(() => {
-  const s = session.value
-  if (!s) return false
-  return (s.segments?.length || 0) > 1 || (s.gaps?.length || 0) > 0
-})
-
 const CATEGORY_COLOR_CLASSES = {
   primary: 'bg-primary/15 text-primary',
   secondary: 'bg-secondary/15 text-secondary',
@@ -193,7 +187,6 @@ const hiddenFileCount = computed(() => {
     </div>
 
     <SessionTimeline
-      v-if="showTimeline"
       class="mb-6"
       :createdAt="session.createdAt"
       :lastActivityAt="session.lastActivityAt"

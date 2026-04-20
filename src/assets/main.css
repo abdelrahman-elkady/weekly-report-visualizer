@@ -94,6 +94,14 @@ body {
   min-height: 100vh;
 }
 
+/* Restore Tailwind v3 default: interactive elements get pointer cursor */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+summary,
+label[for] {
+  cursor: pointer;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

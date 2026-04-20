@@ -46,7 +46,7 @@ const items = computed(() => {
   ]
   merged.sort((a, b) => (a.startedAt || '').localeCompare(b.startedAt || ''))
   const total = parsed.value.totalSec
-  return merged.map(item => {
+  const mapped = merged.map(item => {
     const isGap = item.kind !== 'segment'
     return {
       pct: (item.sec / total) * 100,
@@ -56,6 +56,14 @@ const items = computed(() => {
         : `Segment · ${formatDuration(item.sec / 60)} · ${item.messageCount} message${item.messageCount === 1 ? '' : 's'}`,
     }
   })
+  if (mapped.length === 0) {
+    return [{
+      pct: 100,
+      background: ACTIVITY_BG,
+      tooltip: `Session · ${formatDuration(total / 60)}`,
+    }]
+  }
+  return mapped
 })
 
 const legend = [
