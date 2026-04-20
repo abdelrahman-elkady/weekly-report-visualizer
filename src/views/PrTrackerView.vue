@@ -3,11 +3,11 @@ import { computed, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useReportStore } from '../stores/report.js'
 import { usePrFilters, useUrlPrFacets, sizeBucket, prKey } from '../stores/prFilters.js'
-
-const REPO_COLLAPSED_LIMIT = 8
 import { formatNumber } from '../utils/format.js'
 import PrCard from '../components/PrCard.vue'
 import EmptyState from '../components/EmptyState.vue'
+
+const REPO_COLLAPSED_LIMIT = 8
 
 const router = useRouter()
 const route = useRoute()
@@ -79,33 +79,21 @@ function replaceFilterQuery(updates) {
 function setKind(k) { replaceFilterQuery({ kind: k }) }
 function setState(s) { replaceFilterQuery({ state: s }) }
 
-function toggleRepo(r) {
-  const s = new Set(activeRepos.value)
-  s.has(r) ? s.delete(r) : s.add(r)
-  replaceFilterQuery({ repo: s })
+function makeSetFacet(queryKey, activeRef) {
+  return {
+    toggle(v) {
+      const s = new Set(activeRef.value)
+      s.has(v) ? s.delete(v) : s.add(v)
+      replaceFilterQuery({ [queryKey]: s })
+    },
+    clear() { replaceFilterQuery({ [queryKey]: new Set() }) },
+  }
 }
-function clearRepos() { replaceFilterQuery({ repo: new Set() }) }
 
-function toggleAuthor(a) {
-  const s = new Set(activeAuthors.value)
-  s.has(a) ? s.delete(a) : s.add(a)
-  replaceFilterQuery({ author: s })
-}
-function clearAuthors() { replaceFilterQuery({ author: new Set() }) }
-
-function toggleSize(sz) {
-  const s = new Set(activeSizes.value)
-  s.has(sz) ? s.delete(sz) : s.add(sz)
-  replaceFilterQuery({ size: s })
-}
-function clearSizes() { replaceFilterQuery({ size: new Set() }) }
-
-function toggleBase(b) {
-  const s = new Set(activeBases.value)
-  s.has(b) ? s.delete(b) : s.add(b)
-  replaceFilterQuery({ base: s })
-}
-function clearBases() { replaceFilterQuery({ base: new Set() }) }
+const { toggle: toggleRepo, clear: clearRepos } = makeSetFacet('repo', activeRepos)
+const { toggle: toggleAuthor, clear: clearAuthors } = makeSetFacet('author', activeAuthors)
+const { toggle: toggleSize, clear: clearSizes } = makeSetFacet('size', activeSizes)
+const { toggle: toggleBase, clear: clearBases } = makeSetFacet('base', activeBases)
 
 function clearKey() { replaceFilterQuery({ key: null }) }
 

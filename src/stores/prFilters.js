@@ -140,5 +140,5 @@ export function useUrlPrFacets(route) {
 }
 
 export function usePrFilters() {
-  return { state, resetAll, applyFilters }
+  return { state, resetAll }
 }
