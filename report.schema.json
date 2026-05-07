@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "progress-report-skill/report/v2.0.0",
+  "$id": "progress-report/report/v2.0.0",
   "title": "Progress Report",
   "description": "Output schema for the progress-report-skill. All timestamps are UTC ISO 8601. See REPORT_SCHEMA.md for usage notes and consumer guidance.",
   "type": "object",
