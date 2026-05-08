@@ -27,7 +27,7 @@ const REQUIRED_SESSION = [
 const REQUIRED_DAYBUCKET = ['minutes', 'activeMinutes', 'idleMinutes', 'sessions', 'categories']
 
 const V2_ERROR_HINT =
-  'This visualizer requires a v2.0.0 schema report. Re-run the progress-report-skill (`generate.py`) to produce a compatible report.'
+  'This visualizer requires a v2.0.0 schema report. Re-run the dev-digest skill (`generate.py`) to produce a compatible report.'
 
 /**
  * Validate a parsed report object against the v2.0.0 schema.
