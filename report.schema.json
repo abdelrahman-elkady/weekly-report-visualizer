@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "dev-digest/report/v2.0.0",
-  "title": "Dev Digest",
-  "description": "Output schema for the dev-digest plugin. All timestamps are UTC ISO 8601. See REPORT_SCHEMA.md for usage notes and consumer guidance.",
+  "$id": "claude-dev-digest/report/v2.0.0",
+  "title": "Claude Dev Digest",
+  "description": "Output schema for the claude-dev-digest plugin. All timestamps are UTC ISO 8601. See REPORT_SCHEMA.md for usage notes and consumer guidance.",
   "type": "object",
   "required": [
     "generatedAt",
