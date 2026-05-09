@@ -1,6 +1,6 @@
-# Weekly Report Visualizer
+# Dev Digest Visualizer
 
-A client-side dashboard for visualizing weekly-activity-report data — historical session/PR/ticket analysis, not live monitoring. Data loaded via file upload, persisted in localStorage. Built with Vue 3 + Vite + Tailwind CSS v4 + Chart.js. The `report.schema.json` is the source of truth for all data contracts.
+A client-side dashboard for visualizing claude-dev-digest report data — historical session/PR/ticket analysis, not live monitoring. Data loaded via file upload, persisted in localStorage. Built with Vue 3 + Vite + Tailwind CSS v4 + Chart.js. The `report.schema.json` is the source of truth for all data contracts.
 
 ## Dev Commands
 

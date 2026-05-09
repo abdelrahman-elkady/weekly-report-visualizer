@@ -1,8 +1,8 @@
-# Weekly Report Visualizer — Implementation Plan
+# Dev Digest Visualizer — Implementation Plan
 
 ## Context
 
-This project builds a **client-side historical data visualizer** for `weekly-activity-report` output. The report schema captures a developer's LLM agent sessions, GitHub PR activity, and Jira tickets over a configurable time window. The visualizer loads a `report.json` via file upload, persists it in localStorage, and renders 5 dashboard views. There is no backend, no auth, no live monitoring — it's a static analysis tool for already-generated report data.
+This project builds a **client-side historical data visualizer** for `claude-dev-digest` output. The report schema captures a developer's LLM agent sessions, GitHub PR activity, and Jira tickets over a configurable time window. The visualizer loads a `report.json` via file upload, persists it in localStorage, and renders 5 dashboard views. There is no backend, no auth, no live monitoring — it's a static analysis tool for already-generated report data.
 
 The `report.schema.json` is the source of truth. The mockups in `plan-and-dev-assets/stitch_progress_report_dashboard/` provide the visual theme ("Synthetic Architect" dark design system) but contain fabricated data and monitoring language that must be stripped.
 
@@ -226,4 +226,4 @@ src/
 ## Also: Update CLAUDE.md
 
 Add project description to CLAUDE.md:
-> A client-side dashboard for visualizing weekly-activity-report data — historical session/PR/ticket analysis, not live monitoring. Data loaded via file upload, persisted in localStorage. Built with Vue 3 + Vite + Tailwind CSS v4 + Chart.js. The `report.schema.json` is the source of truth for all data contracts.
+> A client-side dashboard for visualizing claude-dev-digest report data — historical session/PR/ticket analysis, not live monitoring. Data loaded via file upload, persisted in localStorage. Built with Vue 3 + Vite + Tailwind CSS v4 + Chart.js. The `report.schema.json` is the source of truth for all data contracts.

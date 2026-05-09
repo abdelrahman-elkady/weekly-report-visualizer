@@ -4,7 +4,7 @@
 
 ## Context
 
-Reports can span arbitrary date ranges — the `weekly-activity-report` skill defaults to 7 days but users can (and do) generate 3+ week windows. At 3 weeks in the fixed `col-span-5` column (~450px available), Chart.js auto-shrinks bars to ~21px each, then drops every other tick label to avoid overlap (see screenshot: "Fri 27", "Sun 29", "Tue 31", etc. missing from the March/April range).
+Reports can span arbitrary date ranges — the `claude-dev-digest` skill defaults to 7 days but users can (and do) generate 3+ week windows. At 3 weeks in the fixed `col-span-5` column (~450px available), Chart.js auto-shrinks bars to ~21px each, then drops every other tick label to avoid overlap (see screenshot: "Fri 27", "Sun 29", "Tue 31", etc. missing from the March/April range).
 
 We considered widening the Summary grid (reduce `col-span-7` → `col-span-6` for CategoryBars), but that's zero-sum and only delays the problem — a 4-week report would re-trigger skipping. A horizontally scrollable chart container gives each bar a guaranteed minimum width and scales to any report length with no further layout changes.
 
