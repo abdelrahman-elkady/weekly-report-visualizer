@@ -4,7 +4,7 @@
 
 ## Context
 
-The progress-report-skill shipped a v2.0.0 schema (see [plan-and-dev-assets/CHANGELOG.md](plan-and-dev-assets/CHANGELOG.md) and [plan-and-dev-assets/report.schema.json](plan-and-dev-assets/report.schema.json)). The visualizer currently consumes v1.x. The change is load-bearing:
+The claude-dev-digest skill shipped a v2.0.0 schema (see [plan-and-dev-assets/CHANGELOG.md](plan-and-dev-assets/CHANGELOG.md) and [plan-and-dev-assets/report.schema.json](plan-and-dev-assets/report.schema.json)). The visualizer currently consumes v1.x. The change is load-bearing:
 
 - `activeDurationMin` is now capped per-gap-kind. `tool_runtime` and `inference` gaps (previously credited uncapped) are capped at 30 min each. On real data this drops active totals hard — in [plan-and-dev-assets/data/report.json](plan-and-dev-assets/data/report.json), total wall-clock is 39,185 min but active is **only 2,694 min (6.9%)**. One session (`43621413`) has 237 hours of wall-clock but 108 min active — 850k seconds stripped as `tool_runtime` idle. Those outliers were silently inflating v1.x dashboards.
 - `idleSec` now sums stripped time across **all three capped kinds** (`user_pause`, `tool_runtime`, `inference`), not just user pauses. The new `idleBreakdownSec: {user_pause, tool_runtime, inference}` exposes the split.

@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue'
 import { validateReport } from '../utils/validation.js'
 
-const STORAGE_KEY = 'weekly-report-data'
+const STORAGE_KEY = 'dev-digest-data'
 
 const reportData = ref(null)
 const sidebarCollapsed = ref(false)

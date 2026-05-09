@@ -47,13 +47,13 @@ function onFileSelect(e) {
       <!-- Left: Feature highlights -->
       <div>
         <p class="text-[0.6875rem] font-mono uppercase tracking-wider text-primary mb-3">
-          Report Visualizer
+          Dev Digest Visualizer
         </p>
         <h1 class="text-4xl font-bold text-on-surface mb-4 font-headline leading-tight">
-          Weekly Activity<br />Dashboard
+          Dev Digest<br />Dashboard
         </h1>
         <p class="text-on-surface-variant text-sm mb-8 leading-relaxed">
-          Visualize your weekly activity report data. Session analysis,
+          Visualize your claude-dev-digest report data. Session analysis,
           PR tracking, and ticket correlation — all client-side.
         </p>
 
